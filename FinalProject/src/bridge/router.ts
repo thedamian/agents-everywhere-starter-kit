@@ -1,4 +1,4 @@
-import { Hono } from 'hono';
+import { Hono, type MiddlewareHandler } from 'hono';
 import { z } from 'zod';
 import { timingSafeEqual } from 'node:crypto';
 import {
@@ -46,10 +46,12 @@ export function createBridgeRouter(options: {
   assertLocalOperatorOrigins(options.allowedOrigins);
   const { broker } = options;
   const app = new Hono();
-  app.use('*', async (context, next) => {
+  const responseHeaders: MiddlewareHandler = async (context, next) => {
     context.header('Cache-Control', 'no-store');
     context.header('Referrer-Policy', 'no-referrer');
-    if (context.req.path.startsWith('/v1/sessions/')) return next();
+    await next();
+  };
+  const localOperatorOrigin: MiddlewareHandler = async (context, next) => {
     const origin = context.req.header('origin');
     if (origin && !options.allowedOrigins.includes(origin)) throw new BridgeError(403, 'ORIGIN_DENIED', 'Operator origin is not permitted.');
     if (origin) {
@@ -60,7 +62,13 @@ export function createBridgeRouter(options: {
     }
     if (context.req.method === 'OPTIONS') return context.body(null, 204);
     await next();
-  });
+  };
+  for (const path of ['/v1/operator/bridges/*', '/v1/bridges/*']) {
+    app.use(path, responseHeaders, localOperatorOrigin);
+  }
+  for (const path of ['/v1/sessions/:id/bridge', '/v1/sessions/:id/bridge/stop']) {
+    app.use(path, responseHeaders);
+  }
   app.onError((error, context) => {
     const status = error instanceof BridgeError ? error.status : error instanceof z.ZodError ? 400 : 500;
     const code = error instanceof BridgeError ? error.code : error instanceof z.ZodError ? 'INVALID_INPUT' : 'BRIDGE_FAILED';
