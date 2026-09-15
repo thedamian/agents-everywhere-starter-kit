@@ -95,8 +95,8 @@ export default function KioskPage() {
           </label>
           <div className={styles.actions}>
             <button className={styles.primary} disabled={!voiceDisclosure || runtime.voiceConnecting}
-              onClick={() => run(runtime.startVoice())}>{runtime.voiceConnecting ? "Connecting live voice..." : "Start live conversation"}</button>
-            <button onClick={() => setTouch(true)}>Continue by touch</button>
+              onClick={() => run(runtime.startVoice())}>{runtime.voiceConnecting ? "Connecting to the robot..." : "Talk with the robot"}</button>
+            <button onClick={() => setTouch(true)}>Answer by touch instead</button>
           </div>
         </>
       )}
@@ -113,7 +113,7 @@ export default function KioskPage() {
           <p className={styles.help}>Only an explicit approval applies to this exact summary. You can correct it or decline.</p>
           <div className={styles.actions}>
             <button className={styles.primary} disabled={state.busy} onClick={() => run(controller.confirm(pending, "approve", "touch"))}>
-              {pending.kind === "studio" ? "Approve & create movie" : pending.kind === "calendar" ? "Create appointment & invite" : "Approve this summary"}
+              {pending.kind === "studio" ? "Approve brief & create movie" : pending.kind === "calendar" ? "Create appointment & invite" : "Approve this summary"}
             </button>
             <button disabled={state.busy} onClick={() => run(controller.confirm(pending, "reject", "touch"))}>No, change this</button>
           </div>
@@ -121,9 +121,13 @@ export default function KioskPage() {
       )}
       {!pending && active && (touch || editStep) && ["consent", "visitor", "context", "selection"].includes(step) &&
         <TouchAnswer key={`${step}:${snapshot?.inputRevision}`} controller={controller} step={step} onDone={() => setEditStep(null)} />}
+      {!pending && active && prompt.step === "capture" && <div className={styles.actions}>
+        <button className={styles.primary} disabled={!controller.canCapture()} onClick={() => openDrawer("photos")}>Review photos</button>
+        {!controller.canCapture() && <p className={styles.help}>Photography starts only after consent, likeness and provider processing are approved.</p>}
+      </div>}
       {!pending && active && prompt.step === "review" && <div className={styles.actions}>
-        <button className={styles.primary} disabled={!controller.canRequestStudio()} onClick={() => run(controller.requestStudio())}>Review my movie</button>
-        {!controller.canRequestStudio() && <p className={styles.help}>Finish syncing your current photos before reviewing the movie.</p>}
+        <button className={styles.primary} disabled={!controller.canRequestStudio()} onClick={() => run(controller.requestStudio())}>Create brief</button>
+        {!controller.canRequestStudio() && <p className={styles.help}>Finish syncing photos and preferences before creating the brief.</p>}
       </div>}
       {!pending && active && prompt.step === "ready" && <div className={styles.actions}>
         <button className={styles.primary} disabled={state.movieLoading} onClick={() => run(controller.acceptPlayback())}>
@@ -147,8 +151,8 @@ export default function KioskPage() {
       {state.error && <p className={styles.error} role="alert">{state.error}</p>}
       {state.playbackError && <p className={styles.error} role="alert">{state.playbackError}</p>}
       <div className={styles.secondaryActions}>
-        {active && touch && !runtime.voiceReady && <button className={styles.quiet} onClick={() => setTouch(false)}>Switch to live voice</button>}
-        {active && <button className={styles.quiet} onClick={() => { setTouch(true); openDrawer("answers"); }}>Touch controls & corrections</button>}
+        {active && touch && !runtime.voiceReady && <button className={styles.quiet} onClick={() => setTouch(false)}>Talk with the robot</button>}
+        {active && <button className={styles.quiet} onClick={() => { setTouch(true); openDrawer("answers"); }}>Answer or correct by touch</button>}
         {active && <button className={styles.quiet} onClick={() => openDrawer("photos")}>Photos & camera</button>}
       </div>
     </>
@@ -267,7 +271,8 @@ export default function KioskPage() {
       </div>
       <div className={styles.statusBar}>
         <span className={styles.cameraStatus} data-active={runtime.cameraActive}>{runtime.cameraActive ? "Camera on" : "Camera off"}</span>
-        {snapshot?.mode === "fixture" && <span>Synthetic fixture session</span>}
+        {active && <span>Robot session connected</span>}
+        {snapshot?.mode === "fixture" && <span>Fixture media mode - sample output only</span>}
         <span role="status">{{
           unavailable: "Motion not connected", requested: "Stop requested...",
           bridge_confirmed: "Bridge reports stopped; physical motion unverified", unconfirmed: "Stop unconfirmed - ask the operator",

@@ -9,7 +9,7 @@ import { createFixtureStudioProvider } from '../src/providers/studio-fixture.js'
 import { createPrerecordedDemoProvider, DEMO_MEDIA } from '../src/providers/demo-media.js';
 import { ShowroomActionSchema, ShowroomSnapshotSchema, type ShowroomSnapshot, type StudioSelection } from '../src/contracts/showroom.js';
 import { createApp } from '../src/http/app.js';
-import { readConfig } from '../src/config.js';
+import { readConfig, SHOWROOM_SESSION_TTL_MS } from '../src/config.js';
 import { ProviderFailure } from '../src/providers/http-client.js';
 import type { ShowroomCalendar, ShowroomMotion } from '../src/orchestrator/showroom.js';
 import type { BridgeStatus } from '../src/contracts/bridge.js';
@@ -199,6 +199,7 @@ test('HTTP pairing is one-time and reference/showroom routes require the same se
   const paired = await request('/v1/kiosk/pair', undefined, { pairingCode: code.pairingCode });
   assert.equal(paired.status, 201);
   const session = await paired.json();
+  assert.ok(session.expiresAt - Date.now() > SHOWROOM_SESSION_TTL_MS - 10_000);
   assert.equal((await request('/v1/kiosk/pair', undefined, { pairingCode: code.pairingCode })).status, 401);
   assert.equal((await request(`/v1/sessions/${session.sessionId}/showroom`)).status, 401);
   const authorized = await request(`/v1/sessions/${session.sessionId}/showroom`, session.sessionToken);

@@ -148,7 +148,7 @@ export function useShowroomRuntime(controller: ShowroomController,
         audioElement: audio,
         sessionFactory: ({ sdp, signal }) => controller.openVoice(sdp, run, signal),
         allowedTools: ["showroom_state", "showroom_catalog", "showroom_action", "showroom_playback"],
-        greetingContext: "Inspect the current showroom session and naturally ask one missing question. Explain permissions before requesting them. Use only self-reported answers and the approved catalog.",
+        greetingContext: "Inspect the current showroom session and naturally ask one missing question. Explain permissions before requesting them; the customer may say yes or no out loud. After affirmative consent, keep the conversation natural while the camera quietly collects one to four approved photos; do not hide that this was consented. Ask customer preferences only after the photos are synced. Use only self-reported answers and the approved catalog.",
         readyContext: "The actual studio movie is ready. Ask whether the customer wants to watch; only explicit acceptance may call showroom_playback.",
         isCurrent: current,
         onStatus: status => {

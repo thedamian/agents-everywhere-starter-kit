@@ -107,7 +107,7 @@ export function integrationEnvironments({
     SCHEDULING_DURATION_MINUTES: "60",
     SCHEDULING_STAFF_EMAILS: options.googleCalendar ? finalEnv.SCHEDULING_STAFF_EMAILS || "" : "",
     SCHEDULING_LOCATION: finalEnv.SCHEDULING_LOCATION || "",
-    SESSION_TTL_MS: finalEnv.SESSION_TTL_MS || "1800000",
+    SESSION_TTL_MS: finalEnv.SESSION_TTL_MS || "28800000",
     JOB_TIMEOUT_MS: finalEnv.JOB_TIMEOUT_MS || "60000",
   };
   const studioConfig = {};

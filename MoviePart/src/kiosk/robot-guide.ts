@@ -33,7 +33,7 @@ export function robotPrompt(state: KioskState): RobotPrompt {
   };
   if (!snapshot?.consent?.personalization || !snapshot.consent.capture) return {
     id: "permissions", title: "Your choices come first.",
-    message: "May I use a reference photo and the preferences you share to make a car concept? You choose the permissions on screen. You can say no or end the session at any time.",
+    message: "May I use one to four reference photos and the preferences you share to make a car concept? You can say yes. You can say no, choose the permissions on screen, or end the session at any time.",
     action: "permissions", actionLabel: "Let's begin", expression: "smile",
   };
   if (state.movieUrl) return {
@@ -62,20 +62,20 @@ export function robotPrompt(state: KioskState): RobotPrompt {
     message: "Your movie request is in progress. I'll let you know when a result is ready. You can end the session while we wait.",
     action: "controls", actionLabel: "View progress", expression: "thinking",
   };
+  if (!state.uploadedId) return {
+    id: "photo", title: "A reference, only with your say.",
+    message: "Thanks for agreeing. Capture or upload one to four permitted photos first; in the offline demo you can use the sample image.",
+    action: "photo", actionLabel: "Choose a reference", expression: "smile",
+  };
   if (!snapshot.customer || !snapshot.context?.preferences.length) return {
     id: "preferences", title: "What makes a great drive?",
-    message: "Choose a demo customer and tell me what matters to you. Maybe beach road trips, or a quiet weekend away. Confirm your preferences on screen.",
+    message: "Now tell me what matters to you. Choose the car from your preferences, add a few things you love, then confirm your first name and city.",
     action: "preferences", actionLabel: "Choose preferences", expression: "smile",
   };
   if (!snapshot.brief || snapshot.brief.contextRevision !== snapshot.context.revision) return {
     id: "brief", title: "Let's picture it together.",
-    message: "Your preferences are confirmed. Create the concept brief to review the scenes and words before requesting a movie.",
-    action: "brief", actionLabel: "Review the concept", expression: "smile",
-  };
-  if (!state.uploadedId) return {
-    id: "photo", title: "A reference, only with your say.",
-    message: "Review the brief, then choose and upload a permitted photo. In the offline demo you can use the sample image. I don't open your camera automatically.",
-    action: "photo", actionLabel: "Choose a reference", expression: "smile",
+    message: "Your photos and preferences are confirmed. Create the concept brief now so you can review the scenes and words before requesting a movie.",
+    action: "brief", actionLabel: "Create brief", expression: "smile",
   };
   return {
     id: "create", title: "Ready when you are.",
