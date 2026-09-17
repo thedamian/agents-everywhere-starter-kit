@@ -11,6 +11,7 @@ import type { BriefProvider, MediaInput, MediaOutput, MediaProvider, ProfileProv
 import { createMockBriefProvider, createMockProfileProvider, isMockProfileProvider } from '../providers/mock.js';
 import { ProviderFailure } from '../providers/http-client.js';
 import { isPrerecordedDemoProvider } from '../providers/demo-media.js';
+import { SHOWROOM_SESSION_TTL_MS } from '../config.js';
 import { ApiError } from './errors.js';
 import { ShowroomService, type ShowroomCalendar, type ShowroomMotion } from './showroom.js';
 import type { StudioProvider } from '../providers/studio.js';
@@ -117,7 +118,7 @@ export class Orchestrator {
 
   constructor(private readonly options: OrchestratorOptions) {
     this.now = options.now ?? Date.now;
-    this.ttl = options.sessionTtlMs ?? 15 * 60_000;
+    this.ttl = options.sessionTtlMs ?? SHOWROOM_SESSION_TTL_MS;
     this.timeout = options.jobTimeoutMs ?? 60_000;
     this.maxSessions = options.maxSessions ?? 100;
     this.maxQueued = options.maxQueuedJobs ?? 8;

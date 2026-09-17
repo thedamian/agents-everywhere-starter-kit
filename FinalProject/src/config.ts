@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 const flag = z.enum(["true", "false"]).transform((value) => value === "true");
+export const SHOWROOM_SESSION_TTL_MS = 8 * 60 * 60_000;
 const positive = (fallback: number, max: number) =>
   z.coerce.number().int().min(1).max(max).default(fallback);
 const settings = z.object({
@@ -31,7 +32,7 @@ const settings = z.object({
   EXA_API_KEY: z.string().optional(),
   MEDIA_SERVICE_URL: z.url().optional(),
   MEDIA_SERVICE_TOKEN: z.string().optional(),
-  SESSION_TTL_MS: positive(30 * 60_000, 3_600_000),
+  SESSION_TTL_MS: positive(SHOWROOM_SESSION_TTL_MS, SHOWROOM_SESSION_TTL_MS),
   JOB_TIMEOUT_MS: positive(15 * 60_000, 30 * 60_000),
   MAX_SESSIONS: positive(32, 128),
   MAX_QUEUED_JOBS: positive(4, 16),

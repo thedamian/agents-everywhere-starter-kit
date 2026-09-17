@@ -98,6 +98,6 @@ In-memory sessions/jobs are deliberately single-process and non-durable. Never e
 
 Roughly two minutes is a product/UX target, not a generation deadline. The robot can continue the conversation while the accepted brief is processed; do not mutate or resubmit the brief for every new conversational detail.
 
-Operational safety defaults are separate: `SESSION_TTL_MS=1800000` (30 minutes) and `JOB_TIMEOUT_MS=900000` (15 minutes). Operators can configure up to a one-hour session and 30-minute media job. MoviePart's dedicated service defaults to its own 10-minute safety timeout, configurable with `MEDIA_SERVICE_JOB_TIMEOUT_MS`. Coordinate those limits deliberately; changing the studio's advisory timer does not change a running orchestrator's environment.
+Operational safety defaults are separate: `SESSION_TTL_MS=28800000` (8 hours) and `JOB_TIMEOUT_MS=900000` (15 minutes). Operators can configure up to an eight-hour session and 30-minute media job. MoviePart's dedicated service defaults to its own 10-minute safety timeout, configurable with `MEDIA_SERVICE_JOB_TIMEOUT_MS`. Coordinate those limits deliberately; changing the studio's advisory timer does not change a running orchestrator's environment.
 
 Explicit consent revocation, cancellation and expiry still stop work and invalidate access. Media becoming ready should invite playback; it is not evidence that the customer has watched it. Existing operator `.env` values take precedence and must be reviewed when adopting these defaults.
