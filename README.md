@@ -8,17 +8,17 @@ The goal is a useful, understandable encounter, not a chatbot attached to a robo
 
 Movie production runs in the background while the robot continues the showroom conversation. About two minutes is a soft target, not an enforced cutoff. Designers can keep a satisfactory storyboard image and continue instead of paying for repeated cosmetic corrections.
 
-> **Current scope:** the repository contains runnable components and integration contracts, not a claim that every physical, live-generation, and scheduling step is deployed together. The robot's standalone movie is prerecorded; the orchestrator uses a synthetic roster and your supplied prerecorded example as its default movie. Live generation needs configured accounts and authorized assets. No encounter-time guarantee is implied.
+> **Current scope:** the guided showroom connects one authoritative session to the portrait kiosk, consented photo capture, full creator studio, existing OpenAI Live voice, optional Google Calendar invitations, and a separately authorized Windows robot bridge. The safe launcher baseline uses a clearly labelled prerecorded fixture, with paid calls, invitations and physical control disabled. The standalone robot and legacy orchestrator demos remain available. Implemented integrations and offline checks are not a claim of live provider access, iPad certificate trust, observed playback or physical robot safety.
 
-[Architecture and design](docs/architecture.md) | [Movie studio and kiosk](MoviePart/README.md) | [Orchestrator](FinalProject/README.md) | [Robot setup](RobotPart/README.md) | [Teammate interfaces](FinalProject/interfaces/v1/README.md)
+[Architecture and design](docs/architecture.md) | [Trusted HTTPS and operator deployment](docs/showroom-https.md) | [Movie studio and kiosk](MoviePart/README.md) | [Orchestrator](FinalProject/README.md) | [Robot setup](RobotPart/README.md) | [Teammate interfaces](FinalProject/interfaces/v1/README.md)
 
 ## The customer experience
 
 1. **Invite and consent.** Explain the experience and obtain permission before uploading a participant image or using personal information.
-2. **Understand.** Select the permitted customer context and confirm the preferences that should shape the advertisement. Detecting a face is not identifying a stranger.
-3. **Create.** Review a structured brief or choose a studio template, then start one asynchronous movie job.
+2. **Understand.** Read back self-reported preferences and explicitly confirm each proposal. Detecting a face is not identifying a stranger. The legacy developer harness retains its separate synthetic roster.
+3. **Create.** After informed capture and transfer consent, approve one to four original photos and a real vehicle/template selection, then start one asynchronous full-studio movie job.
 4. **Reveal.** Show truthful progress, download the authorized result, and acknowledge reveal only after actual playback.
-5. **Follow up or leave.** Offer the next showroom action without treating it as a confirmed CRM/calendar write. Ending an orchestrated session revokes access and initiates renderer cleanup.
+5. **Follow up or leave.** Optionally confirm the complete recipient, location and 60-minute time readback before a Google Calendar invitation. Disabled or disconnected scheduling is never reported as booked. Ending the session revokes access and initiates local media cleanup; it does not silently cancel a confirmed appointment.
 
 ## System architecture
 
@@ -28,22 +28,25 @@ flowchart LR
     Robot["RobotPart<br/>Tablet, camera, voice and PadBot BLE"]
     RobotAPI["Robot demo backend<br/>Prerecorded movie and mock booking"]
     Kiosk["MoviePart /kiosk<br/>Consent, brief, progress and playback"]
+    Gateway["MoviePart /api/showroom<br/>Fixed private-upstream gateway"]
     Orchestrator["FinalProject<br/>Session and workflow authority"]
     Media["MoviePart media service<br/>Brief-driven rendering and cleanup"]
-    Studio["MoviePart /<br/>Independent creator studio"]
+    Studio["MoviePart / and private studio API<br/>Creator studio"]
     Worker["Studio worker<br/>References, director and storyboard"]
     Voice["OpenAI Live<br/>Configured voice session"]
     Models["OpenAI references, planning and stills<br/>Google Veo: default studio animation"]
     Encoder["FFmpeg and ffprobe<br/>MP4 assembly and validation"]
-    Followup["Future CRM and calendar integration"]
+    Followup["Google Calendar<br/>Explicit OAuth and invitation confirmation"]
+    Operator["Windows Chrome /robot-bridge<br/>Loopback-only operator"]
+    PadBot["PadBot BLE<br/>Explicit pairing and physical enablement"]
 
     Visitor --> Robot
     Robot --> RobotAPI
     RobotAPI -->|"Voice session setup"| Voice
     Robot <-->|"WebRTC audio"| Voice
-    Robot -. "Trusted shared-session bridge: integration boundary" .-> Orchestrator
     Visitor --> Kiosk
-    Kiosk -->|"Session capability"| Orchestrator
+    Kiosk -->|"Same-origin HTTPS; session capability"| Gateway
+    Gateway -->|"Allowlisted HTTP routes only"| Orchestrator
     Orchestrator -->|"HTTP media mode: service token"| Media
     Visitor --> Studio
     Studio --> Worker
@@ -51,10 +54,12 @@ flowchart LR
     Media --> Models
     Worker --> Encoder
     Media --> Encoder
-    Orchestrator -. "Not implemented as a live follow-up" .-> Followup
+    Orchestrator -->|"Optional confirmed 60-minute invitations"| Followup
+    Operator <-->|"Scoped local WebSocket; no public gateway"| Orchestrator
+    Operator -->|"Bounded pulses, watchdog and Stop"| PadBot
 ```
 
-Solid arrows show implemented component paths, with live providers enabled only when configured. Dashed arrows identify integration boundaries or deferred work. The kiosk calls Dwight's orchestrator; it does **not** call the media service directly. The creator studio is a separate workflow, not another URL for the orchestrator.
+Arrows show implemented component paths, with live providers and physical control independently opt-in. The kiosk calls FinalProject through its same-origin gateway; it never receives studio, provider or operator master credentials. The creator studio remains usable independently, while showroom studio mode submits its immutable, consented inputs through the full studio API and worker. The standalone RobotPart demo is a separate experience, not a second owner of the kiosk session.
 
 See the [detailed design](docs/architecture.md) for sequence diagrams, job lifecycles, credentials, persistence, and cancellation behavior.
 
@@ -63,10 +68,11 @@ See the [detailed design](docs/architecture.md) for sequence diagrams, job lifec
 | Component | Responsibility | Current boundary |
 |---|---|---|
 | [RobotPart](RobotPart/README.md) - Damian | Tablet UI, local MediaPipe face detection, PadBot BLE control, voice conversation, and showroom workflow | Standalone demo serves a prerecorded MP4 and mock test-drive booking. Its existing capture flow is not automatically the orchestrator's consent flow. |
-| [FinalProject](FinalProject/README.md) - Dwight | Pairing, session capabilities, consent, confirmed context, ad briefs, media jobs, authorized assets, and revocation | Synthetic roster/product contract; mock providers by default; optional OpenAI, Exa, and HTTP media adapters |
-| [MoviePart](MoviePart/README.md) - Tiya | Creator studio, reference-led filmmaking, customer kiosk, and asynchronous media service | Real-vehicle studio and synthetic-concept media-service contracts remain separate |
+| [FinalProject](FinalProject/README.md) - Dwight | One-time pairing, authoritative showroom, revision-bound approvals, studio lifecycle, Live SDP setup, scoped bridge intents, calendar and revocation | Explicit fixture/studio modes; independent voice/calendar/bridge opt-ins; legacy roster/brief API preserved |
+| [MoviePart](MoviePart/README.md) - Tiya | Creator studio and worker, portrait kiosk, local face/pose capture, fixed gateway, Windows operator page, and legacy media service | One shared session through the private orchestrator; real-vehicle studio and legacy synthetic-concept media contracts remain distinct |
+| Original MoviePart - [Edilma](https://github.com/edilma) | Original MoviePart, including the first movie, its assets, and the uploaded video | Original contributions are preserved in the commit history |
 | [ResearchSocialMediaPart](ResearchSocialMediaPart/README.md) | Reserved workstream for permitted enrichment | Folder is a placeholder. The implemented optional Exa adapter lives in FinalProject and uses an explicitly supplied profile URL. |
-| [OfficeCalendarPart](OfficeCalendarPart/README.md) | Reserved CRM/calendar handoff | Folder is a placeholder; no live booking or Ambiguous AI write is implied |
+| [OfficeCalendarPart](OfficeCalendarPart/README.md) | Original reserved CRM/calendar workstream | Implementation now lives in `FinalProject/src/calendar`; Google OAuth and confirmed invitations remain explicitly opt-in |
 | [OriginalRepo](OriginalRepo/README.md) | Inherited Agents, Everywhere starter kit | Reference material and original examples, not the Magic Pitch Robot runtime |
 
 ## Choose the right demo
@@ -75,11 +81,21 @@ See the [detailed design](docs/architecture.md) for sequence diagrams, job lifec
 |---|---|---|
 | Robot and voice demo | `http://localhost:5173` | Hardware/browser interaction, local face detection, conversation, prerecorded movie, and mock scheduling |
 | Orchestrator developer harness | `http://127.0.0.1:3101/dev` | Offline consent/session/job flow with the supplied prerecorded demo; no paid generation required |
-| Showroom kiosk | `http://127.0.0.1:3200/kiosk` | Customer-facing client of the orchestrator: explicit consent, confirmed context, brief review, and authorized playback |
+| Showroom kiosk | `http://127.0.0.1:3200/kiosk` locally; configured trusted HTTPS on iPad | Portrait face, one-time pairing, guided readbacks, consented references, studio progress, authorized playback and optional scheduling |
+| Windows robot operator | `http://127.0.0.1:3200/robot-bridge` on the operator machine | Separate role-code redemption, click-to-pair BLE, explicit physical enablement and Stop; never the iPad/public origin |
 | Creator studio | `http://127.0.0.1:3200/` | Independent reference-backed film creation with visible setup requirements |
 | Media service | `http://127.0.0.1:3201` | Server-to-server asynchronous rendering; not a browser UI |
 
 Ports are local defaults, not a hosted deployment. The browser and backend must agree on exact origins; `localhost` and `127.0.0.1` are different origins. A separate tablet needs an explicitly configured reachable address, pairing, and trusted HTTPS where browser APIs require it.
+
+The showroom integration gateway is `/api/showroom` on MoviePart: the iPad uses
+one trusted HTTPS origin, while FinalProject and studio processes stay private
+on loopback. The [deployment guide](docs/showroom-https.md) documents its exact
+route allowlist, one-time pairing, Windows-only local operator bridge, and
+independent launcher flags. `--ui-port 3202` remains supported; no live voice,
+film generation, calendar write or physical enablement is inferred from stored
+credentials. The full-studio option runs the creator worker, not the legacy
+dedicated media service.
 
 ### Start the offline orchestrator
 
@@ -108,13 +124,20 @@ if (-not (Test-Path .env)) { Copy-Item .env.example .env }
 npm run dev
 ```
 
-Open `/kiosk` to pair with the orchestrator or join the robot's existing session through an agreed trusted bridge. Creating another session in the kiosk does not attach the robot to it. Refreshing the kiosk forgets its in-memory capability.
+For the integrated `/kiosk`, use the coordinated launcher above instead of
+starting unrelated sessions in two demos. The kiosk exchanges a one-time
+operator code for its authoritative session; refreshing forgets its in-memory
+capability. Standalone studio startup does not itself configure showroom pairing.
 
 For the independent creator studio, also run `npm run worker` in another terminal in `MoviePart`. Edit the private `.env` using [MoviePart's current example](MoviePart/.env.example): the default workflow requires `OPENAI_API_KEY` and `GEMINI_API_KEY`, with explicit model choices shown there. Provide the selected car's authorized references and confirm generation consent before creating a movie. The Create action lists missing requirements; it never silently turns unavailable live generation into mock success.
 
 After editing `.env`, wait for active jobs to finish before restarting the web app and worker. Refreshing the browser alone does not reload credentials. For production, use `npm run build` followed by `npm run start` instead of `npm run dev`; the worker remains a separate process.
 
-For real orchestrator media rendering, separately run `npm run media-service` in MoviePart and configure Dwight's HTTP media adapter with the matching private service token. See [the media handoff](MoviePart/README.md#dwight-integration) before sending any participant data. Mock orchestrator mode does not need this service.
+For **legacy** orchestrator media rendering, separately run `npm run media-service`
+and configure the HTTP media adapter with its private service token. Showroom
+`--live-studio` instead runs the full creator worker and never substitutes this
+dedicated single-image/brief service. See [the media handoff](MoviePart/README.md#dwight-integration)
+before sending participant data.
 
 For hardware operation, follow [RobotPart's prerequisites and start commands](RobotPart/README.md). Bluetooth, camera, microphone, and voice-provider readiness are separate from movie rendering.
 
@@ -149,7 +172,7 @@ Dwight's current `demo-car-v1` brief instead describes an unbranded synthetic co
 - A ready file is not proof it played. Tiya's kiosk sends `media_revealed` after actual playback; choose one device to own that acknowledgement.
 - Cancellation removes renderer-held work/assets and blocks late resubmission by key. It does not erase a model vendor's retained data or guarantee reversal of a paid submission.
 - Face detection is not face recognition. The orchestrator roster is synthetic; do not present it as real enrollment or use images to discover a stranger's identity.
-- Local filesystem persistence is not distributed infrastructure. Cloud deployment, real CRM/calendar execution, and live physical end-to-end acceptance remain separate work.
+- Local filesystem persistence is not distributed infrastructure. Calendar adapters exist, but live OAuth consent, account access, invitation delivery, hosted deployment and physical end-to-end acceptance remain separate operator verification.
 
 ## Validation and documentation
 
@@ -158,10 +181,14 @@ Run commands from the named component directory:
 | Component | Local validation |
 |---|---|
 | MoviePart | `npm run typecheck`, `npm test`, `npm run build` |
-| FinalProject | `npm run verify` - typecheck, tests, generated-interface drift, build, and synthetic smoke flow |
+| FinalProject | `npm run verify` - typecheck, tests including colocated bridge tests, shared-runtime tests, generated-interface drift, clean production build, and synthetic smoke flow |
 | RobotPart | `npm test`, `npm run build` |
+| Shared showroom runtime | `npm test` in `packages/showroom-runtime`; also included by FinalProject verification |
 
 Offline tests and encoded fixtures demonstrate software behavior, not live account access, customer likeness quality, physical robot safety, or human-observed playback.
+MoviePart's default tests include its colocated operator controller tests.
+FinalProject's clean production build excludes colocated test modules, including
+stale outputs from earlier builds.
 
 - [Architecture and interaction design](docs/architecture.md)
 - [Movie studio setup and pipeline](MoviePart/README.md)

@@ -2,7 +2,7 @@
 
 This document describes the implementation in this repository and the boundaries needed to assemble the showroom experience. It does not assume another worktree's launcher, a running local process, or a deployed cloud service is available.
 
-[Project overview](../README.md) | [MoviePart setup](../MoviePart/README.md) | [Orchestrator contracts](../FinalProject/docs/contracts.md)
+[Project overview](../README.md) | [Trusted HTTPS and operator setup](showroom-https.md) | [MoviePart setup](../MoviePart/README.md) | [Showroom contracts](../FinalProject/docs/showroom-contracts.md)
 
 ## 1. Design principles
 
@@ -21,8 +21,9 @@ This document describes the implementation in this repository and the boundaries
 ```mermaid
 flowchart TB
     subgraph Browser["Browser and device surfaces"]
-        RobotUI["RobotPart tablet<br/>Camera, local face detection, voice and BLE"]
+        RobotUI["Standalone RobotPart demo<br/>Camera, local face detection, voice and BLE"]
         Kiosk["MoviePart /kiosk<br/>Shared-session customer UI"]
+        Operator["Windows /robot-bridge<br/>Local operator only"]
         Studio["MoviePart /<br/>Independent creator workbench"]
         Bot["PadBot hardware"]
         RobotUI -->|"Web Bluetooth"| Bot
@@ -31,6 +32,7 @@ flowchart TB
     subgraph Local["Local backend processes"]
         RobotAPI["RobotPart API<br/>Voice setup, workflow and demo movie"]
         Final["FinalProject API<br/>Consent and session authority"]
+        Gateway["MoviePart /api/showroom<br/>Fixed same-origin HTTP gateway"]
         MovieAPI["MoviePart Next API<br/>Private studio uploads and jobs"]
         Queue["Studio disk-backed job queue"]
         Worker["Separate studio worker"]
@@ -43,13 +45,20 @@ flowchart TB
         Veo["Google Veo<br/>Optional studio hero clip"]
         Exa["Exa<br/>Optional supplied-profile enrichment"]
         Encode["Local FFmpeg and ffprobe"]
+        Calendar["Google Calendar<br/>Private OAuth and explicit invitation confirmation"]
     end
 
     RobotUI --> RobotAPI
     RobotAPI -->|"Server-authenticated voice setup"| Voice
     RobotUI <-->|"WebRTC audio"| Voice
-    RobotUI -. "Contractual bridge; not wired by the standalone demo" .-> Final
-    Kiosk -->|"Device pairing, then session capability"| Final
+    Kiosk -->|"One-time pairing, then memory-only capability"| Gateway
+    Gateway -->|"Exact allowlisted paths to loopback"| Final
+    Final -->|"Optional Live SDP setup"| Voice
+    Kiosk <-->|"Existing Live WebRTC transport"| Voice
+    Operator <-->|"Role-scoped loopback WebSocket"| Final
+    Operator -->|"Click-to-pair BLE; bounded movement and Stop"| Bot
+    Final -->|"Optional full creator-studio adapter"| MovieAPI
+    Final -->|"Optional confirmed 60-minute invitations"| Calendar
     Studio -->|"Same-origin session or studio API token"| MovieAPI
     MovieAPI --> Queue --> Worker
     Final -->|"Optional HTTP media adapter and service token"| Media
@@ -66,16 +75,22 @@ The two MoviePart execution paths share a project, not a job contract:
 
 | Path | Input and authority | Rendering behavior |
 |---|---|---|
-| Creator studio | MoviePart job request, approved interests, selected template, and a real vehicle reference pack | Extracts/plans/reviews four or six shots; optional Veo; animated-still assembly |
-| Orchestrator media service | Dwight's complete `AdBrief` and consented PNG/JPEG, submitted by his backend | Uses the brief's scene descriptions and durations; overlays on-screen copy and CTA; renders a synthetic concept MP4 |
+| Creator studio, including showroom studio mode | Immutable MoviePart request, approved interests, one to four original photos, selected template and real vehicle references | Complete references/director/storyboard/video pipeline and validated assembly; no dedicated image-engine substitution |
+| Legacy orchestrator media service | Dwight's complete `AdBrief` and consented PNG/JPEG, submitted by his backend | Uses the brief's scenes, durations, copy and CTA to render the legacy synthetic concept MP4 |
 
 The media service does not invoke the studio director to replace the incoming brief. It also does not turn `demo-car-v1` into the studio's Tesla Model Y or Toyota Tundra Hybrid.
 
-The robot backend creates the voice session using its server-side provider credential, then returns the validated WebRTC answer to the tablet. Audio is exchanged through the browser voice transport. Local face detection does not mean voice processing is offline.
+Both voice backends reuse the shared RobotPart Live request/transport: FinalProject
+sets up the authoritative showroom session, while the standalone demo retains
+its own workflow. Only validated SDP and opaque voice-session identifiers reach
+the browser. Local face/pose detection does not mean Live voice processing is offline.
 
 ## 3. Kiosk and orchestrator interaction
 
-The customer kiosk is an operating surface: visible consent, confirmed customer/preferences, brief review, specific progress, playback, and an always-understandable end-session action. Its pairing controls are for the operator, not an invitation to expose backend credentials.
+The portrait customer kiosk combines the green/lime face, guided consent and
+readbacks, quiet one-to-four-photo capture, honest studio progress, playback,
+and optional scheduling. The operator issues a short-lived one-time code
+locally; the kiosk never accepts an operator/device master token.
 
 The robot's conversation and the movie's production are concurrent. Start the background job when the minimum consented inputs are ready, not after the entire sales conversation ends. Keep the accepted input snapshot stable while the conversation continues.
 
@@ -85,8 +100,8 @@ sequenceDiagram
     participant Robot
     participant Orchestrator
     participant Movie as Magic Video engine
-    Customer->>Robot: Consent, reference image and initial preferences
-    Robot->>Orchestrator: Confirm product and submit one brief/job
+    Customer->>Robot: Confirm consent, original photos and initial preferences
+    Robot->>Orchestrator: Confirm immutable studio selection and one job
     Orchestrator->>Movie: Start background production
     par Foreground showroom conversation
         Robot->>Customer: Discuss interests and approved product benefits
@@ -104,6 +119,17 @@ sequenceDiagram
 ```
 
 Approximately two minutes is an advisory experience target. The studio's elapsed-time display never cancels work or selects fallback media at that threshold. Operational safety limits are separate: the orchestrator defaults to a 30-minute session and a 15-minute job timeout, while the dedicated MoviePart service defaults to a configurable 10-minute job timeout. Existing `.env` overrides and already-running processes retain their configured limits until deliberately changed/restarted.
+
+The authoritative showroom uses `POST /v1/kiosk/pair`, session `/showroom`
+snapshots, revision/event-ID-bound `/showroom/actions`, and separately owned
+raw reference uploads. Every proposal has an explicit readback and fingerprint
+before confirmation. Studio transfer/job receipts reconcile uncertain requests;
+fixture mode instead uses the registered prerecorded film with `mock_fixture`
+provenance. Voice and an unpaired robot do not gate stationary consented capture.
+
+**The sequence below documents the preserved legacy brief/developer-client
+path, not the portrait showroom API.** The current route matrix is in the
+[showroom contracts](../FinalProject/docs/showroom-contracts.md).
 
 ```mermaid
 sequenceDiagram
@@ -157,7 +183,11 @@ This is the successful path. Any provider failure, expiry, cancellation, invalid
 
 The kiosk uses `Authorization` for downloads because an HTML video element cannot attach a bearer header by itself. Blob URLs are revoked when replaced, when permission/session validity is lost, and when the view is disposed.
 
-Snapshot `revision` is the polling cursor; context has its own revision. A `resetRequired` snapshot replaces outdated state. A changed `serverInstanceId`, expired session, or revoked capability invalidates the local session rather than silently pairing a new customer.
+Legacy snapshots use a revision cursor and `resetRequired`; showroom snapshots
+are whole-state reads with distinct snapshot/input revisions. A changed
+`serverInstanceId`, expired session or revoked capability invalidates local
+state rather than silently pairing another customer. Stop and consent
+withdrawal bypass queued provider work without bypassing authentication.
 
 ## 4. Creator-studio filmmaking pipelines
 
@@ -343,12 +373,15 @@ If settlement or deletion times out, the service retains a pending cleanup recei
 
 | Boundary | Credential | Contract and state |
 |---|---|---|
-| Kiosk pairing -> FinalProject | Device token used only for pairing | Returns a session capability; kiosk holds it in memory, not a URL |
-| Kiosk -> session routes/assets | Session token | Versioned snapshots, events, commands, and owned assets |
+| Local operator -> kiosk pairing issuance | Private operator bootstrap token | Issues a short-lived one-time code; never forwarded through the public gateway |
+| Kiosk code exchange -> FinalProject | One-time code only | Returns a session capability held in memory, never a query/cookie/public bundle |
+| Kiosk -> showroom routes/assets | Session token through the fixed gateway | Versioned snapshots, confirmed actions, scoped original photos and authorized movie |
 | FinalProject -> media service | `MEDIA_SERVICE_TOKEN`, server-only | Global job UUID is both body/header idempotency key; changed-payload reuse is rejected |
 | Studio browser -> MoviePart API | HTTP-only same-origin session cookie | Private uploads and jobs tied to that browser principal |
 | Studio machine client -> MoviePart API | `MOVIE_API_TOKEN` | Separate principal; not interchangeable with the media-service token |
 | Backend -> model provider | Private provider API key | Never embedded in browser code, downloaded contracts, or generated docs |
+| FinalProject -> Google Calendar | Private OAuth client/refresh credentials | One confirmed 60-minute draft and stable event ID; invitation receipt does not prove inbox delivery |
+| Local Windows bridge -> FinalProject | Separate redeemed operator/bridge role credentials | Fixed local WebSocket, lease generation, bounded pulses, watchdog and truthful Stop acknowledgements |
 
 | Store | Lifetime and restart behavior |
 |---|---|
@@ -357,8 +390,14 @@ If settlement or deletion times out, the service retains a pending cleanup recei
 | Media-service private work directory | Image, brief, scene frames and MP4 retained until cleanup; no public static-file directory |
 | Media-service receipts | Minimal IDs, request fingerprint and cleanup state survive restart for deduplication and reconciliation |
 | Browser Blob URLs | Temporary authorized playback resources, released when no longer needed |
+| Calendar OAuth/booking receipts | Private durable stores; session/photo cleanup does not cancel an appointment |
+| Studio cleanup receipts | Durable transfer/job keys; startup reconciles unfinished cleanup without another paid submission |
 
-Creator-studio deletion currently applies to terminal jobs. The media-service protocol's active cancellation/tombstone guarantee is a **different endpoint and implementation**. Do not promise active studio cancellation because the service adapter supports it.
+The creator studio now has its own active-cancellation and upload/job receipt
+endpoints. It waits for owned worker/provider/encoder settlement before claiming
+local deletion and prevents delayed requests from reviving cancelled work.
+These remain distinct from the legacy media-service cancellation protocol;
+neither can promise to erase provider-retained data or reverse accepted charges.
 
 Ready-result provenance is also distinct from encoding mode:
 
@@ -370,22 +409,25 @@ Ready-result provenance is also distinct from encoding mode:
 ## 7. Deployment and completion boundaries
 
 - Default local ports are robot UI **5173**, robot development API **8787**, orchestrator **3101**, studio/kiosk **3200**, and media service **3201**.
-- Configure an exact kiosk origin in FinalProject's `ALLOWED_ORIGINS`. Allowed-host/origin settings, pairing, and HTTPS need deliberate review before any LAN/public exposure; a host-binding change is not deployment security.
-- The current standalone RobotPart talks to its own API and prerecorded movie workflow. Its bridge to the shared orchestrator must be explicitly wired and tested; browser camera permission alone does not grant upload/personalization consent.
-- `demo-car-v1` remains a synthetic product contract. Real-vehicle orchestration requires an agreed Product/AdBrief extension and approved facts/assets, not an alias to a studio catalog ID.
-- ResearchSocialMediaPart and OfficeCalendarPart are workstream placeholders. FinalProject has an optional Exa adapter but only disabled follow-up execution; RobotPart's test-drive booking is a mock workflow.
-- No distributed queue, Cloud Run deployment, Trigger.dev execution, or live CRM/calendar delivery is asserted by these diagrams.
+- The iPad uses one trusted HTTPS origin and `/api/showroom`; all service ports remain loopback. Exact origins, certificate trust and a restricted proxy must be configured explicitly. Do not expose studio/operator/OAuth/bridge-control routes with a bare tunnel.
+- The standalone RobotPart keeps its own prerecorded/mock-booking demo. The showroom reuses its Live/vision/PadBot modules with one FinalProject session and a separate Windows operator page; iPad Web Bluetooth is not assumed.
+- `demo-car-v1` remains a legacy synthetic contract. Real-vehicle showroom orchestration uses the separate immutable studio contract, not a synthetic-product alias.
+- Calendar execution is implemented under `FinalProject/src/calendar`; Google OAuth and invitations are independent opt-ins. ResearchSocialMediaPart and OfficeCalendarPart remain original workstream folders.
+- No distributed queue, cloud deployment, live account access or confirmed invitation delivery is asserted by these diagrams.
 - Automated HTTP/encoding checks are separate from physical safety, live-provider acceptance, visual fidelity, and customer-observed playback.
 
 ## Source map
 
 | Design surface | Implementation or contract |
 |---|---|
-| Kiosk controller and authorized client | [Controller](../MoviePart/src/kiosk/controller.ts), [client](../MoviePart/integration/orchestrator-client.ts) |
+| Showroom kiosk and authorized gateway client | [Controller](../MoviePart/src/kiosk/showroom-controller.ts), [client](../MoviePart/integration/showroom-client.ts), [gateway](../MoviePart/src/server/showroom-gateway.ts) |
+| Legacy brief-client compatibility | [Controller](../MoviePart/src/kiosk/controller.ts), [client](../MoviePart/integration/orchestrator-client.ts) |
 | Session workflow and provider selection | [Orchestrator](../FinalProject/src/orchestrator/service.ts), [configuration](../FinalProject/src/config.ts) |
+| Guided approvals and full-studio adapter | [Showroom](../FinalProject/src/orchestrator/showroom.ts), [adapter](../FinalProject/src/providers/studio.ts) |
+| Calendar and local operator safety | [Calendar](../FinalProject/docs/google-calendar.md), [bridge](../FinalProject/src/bridge/README.md) |
 | Studio pipeline and templates | [Pipeline](../MoviePart/src/pipeline.ts), [templates](../MoviePart/src/templates/index.ts) |
 | Studio worker and persistence | [Worker](../MoviePart/src/jobs/worker.ts), [store](../MoviePart/src/jobs/store.ts) |
 | Media-service acceptance and cleanup | [Service](../MoviePart/src/media-service/service.ts), [HTTP](../MoviePart/src/media-service/http.ts) |
 | Brief-driven encoding and on-screen copy | [Executor](../MoviePart/src/media-service/executor.ts), [renderer](../MoviePart/src/media-service/render.ts) |
 | Hardware/browser demo | [Robot UI](../RobotPart/src/main.jsx), [PadBot protocol](../RobotPart/RobotLibrary/README.md) |
-| Portable teammate handoff | [OpenAPI, schemas and examples](../FinalProject/interfaces/v1/README.md) |
+| Portable teammate handoff | [Showroom schemas/OpenAPI](../FinalProject/interfaces/showroom-v1/README.md), [legacy v1](../FinalProject/interfaces/v1/README.md) |

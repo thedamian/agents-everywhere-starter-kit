@@ -1,0 +1,12 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "incremental": false
+  },
+  "include": [
+    "src/server/showroom-gateway.ts",
+    "src/app/api/showroom/[...path]/route.ts",
+    "tests/showroom-gateway.test.ts",
+    "tests/launcher-isolation.test.ts"
+  ]
+}

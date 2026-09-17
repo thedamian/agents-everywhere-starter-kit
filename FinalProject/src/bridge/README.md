@@ -29,6 +29,9 @@ const bridgeControl = attachBridgeWebSocket(httpServer, {
 Construct only when `SHOWROOM_BRIDGE_ENABLED=true`. Install `ws` and `@types/ws`
 in FinalProject. Register the router before wildcard session routes; include the
 exact local operator origins in the outer application's origin policy as well.
+Bridge middleware is scoped to its bridge/operator namespaces and session bridge
+endpoints; mounting at `/` must not intercept public kiosk pairing, health, OAuth,
+or unrelated application routes.
 Recommended local operator origin: `http://127.0.0.1:3202`. Origins must be
 loopback HTTP(S) origins, not public/tunnel origins. The iPad uses the existing
 HTTPS gateway and showroom actions, not this WebSocket and never Web Bluetooth.
@@ -116,7 +119,7 @@ Run from FinalProject:
 
 ```text
 npm run typecheck
-node --import tsx --test src/bridge/bridge.test.ts src/bridge/websocket.test.ts
+node --import tsx --test src/bridge/bridge.test.ts src/bridge/router.test.ts src/bridge/websocket.test.ts
 ```
 
 Tests use fake BLE/timers and a real loopback-only WebSocket server; they never

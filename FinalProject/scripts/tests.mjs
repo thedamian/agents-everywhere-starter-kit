@@ -42,7 +42,7 @@ try {
     }
   }
   const files = [...new Set((await Promise.all(
-    (paths.length ? paths : [resolve(root, "test")]).map(discover),
+    (paths.length ? paths : [resolve(root, "test"), resolve(root, "src")]).map(discover),
   )).flat())].sort();
   if (!files.length) throw new Error("No .test.ts files found.");
   const child = spawn(process.execPath, [

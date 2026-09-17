@@ -81,10 +81,14 @@ No FFmpeg installation is required to run these checks: the supplied MP4 is alre
 
 1. From the source checkout run `npm run verify`, then `npm run package:demo`.
 2. Review `artifacts/magicpitch-demo.sha256` and inspect `tar -tzf artifacts\magicpitch-demo.tgz`. The script compares archive contents with its explicit file allowlist.
-3. Extract to a new directory, then run `npm ci --omit=dev`, `npm run smoke`, and `npm start` there.
-4. Keep only a known-good, verified archive for recovery. Use the unchanged package/lock pair. Runtime dependencies are restored, not copied across OSes.
+3. Extract to a new directory outside the checkout, then run `npm ci --omit=dev`, `npm run smoke`, and `npm start` there. No `packages` sibling from a source checkout is required.
+4. Keep only a known-good, verified archive for recovery. Use the archive's package/lock pair together. Registry dependencies are restored, not copied across OSes; the canonical local showroom runtime is included under `vendor/showroom-runtime`.
 
 The package includes compiled JavaScript/contracts and the immutable demo manifest, package/lock files, runtime pins, `.env.example`, the developer harness, the specifically allowlisted user-provided `default-demo.mp4`, the two synthetic fixtures and provenance README, contract/runbook documentation, and smoke/guard scripts. It never includes `.env`, `.runtime`, other customer media, broad fixture directories, provider logs, caches, `node_modules`, or source tests. Packaging validates the default asset against the manifest and removes only its own known `artifacts/demo-package` staging directory.
+
+The allowlist also includes all `@magicpitch/showroom-runtime` browser/server JavaScript and declarations plus its package metadata and README, but not its tests. The packager rewrites only the shipped manifest/lockfile link from `file:../packages/showroom-runtime` to `file:vendor/showroom-runtime`; the source checkout manifests and all registry versions/integrities remain unchanged. Missing exports or unvendored local lockfile links fail packaging rather than producing a nonportable archive.
+
+Run `npm exec --call "node --test integration-tests/package.test.mjs"` with the pinned npm after building to check canonical vendored bytes, production-only installation into an owned OS-temporary directory outside the repo, isolated dependency resolution, and offline imports/startup/health/smoke with voice, calendar and motion disabled. Running through npm supplies its active CLI path (important when a global npm upgrade differs from the version bundled with Node). The test cleans up its extraction and owned server process. npm installation can contact its registry; no provider calls or hardware actions are part of the check.
 
 GitHub Actions uses read-only permissions, no provider secrets, and Windows/Linux jobs. A successful Linux job uploads only the allowlisted archive/checksum with seven-day retention. No deployment, calendar action, or remote service mutation is performed. Observe a real workflow run before asserting that GitHub CI is green.
 

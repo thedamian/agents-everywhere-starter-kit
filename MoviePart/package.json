@@ -13,7 +13,7 @@
     "build": "next build",
     "start": "node --env-file-if-exists=.env node_modules/next/dist/bin/next start -H 127.0.0.1 -p 3200",
     "typecheck": "tsc --noEmit",
-    "test": "node --import tsx --test tests/*.test.ts",
+    "test": "node --import tsx --test tests/*.test.ts src/robot-bridge/*.test.ts",
     "assets:showroom": "node scripts/prepare-showroom-assets.mjs"
   },
   "dependencies": {

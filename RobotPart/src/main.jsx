@@ -117,6 +117,13 @@ function App() {
   };
 
   const isCurrent = (id, token) => id === customerIdRef.current && token === generation.current;
+  // Robot movement is helpful, but voice and capture must never wait on a
+  // BLE command: a connected robot can still have a delayed or stuck write.
+  const queueRobot = (operation) => {
+    Promise.resolve().then(operation).catch((error) => {
+      console.warn("Robot command did not complete:", error);
+    });
+  };
   const tool = async (name, args) => {
     const activeCustomerId = customerIdRef.current;
     if (!activeCustomerId) return { ok: false, error: "No active customer." };
@@ -197,10 +204,11 @@ function App() {
       const found = detections[0];
       if (found) {
         found.boundingBox.frameWidth = video.current.videoWidth;
-        setFace(found); await robot.current.scan(found);
+        setFace(found);
+        queueRobot(() => robot.current.scan(found));
         if (!customerIdRef.current) return;
         if (found.boundingBox.width > video.current.videoWidth * 0.32 && !captured.current) await capture(found);
-      } else { setFace(null); await robot.current.stop(); }
+      } else { setFace(null); queueRobot(() => robot.current.stop()); }
     }
     requestAnimationFrame(scanLoop);
   };
@@ -222,12 +230,13 @@ function App() {
       form.set("image", blob, `${activeCustomerId}.jpg`);
       form.set("clientId", initialClient);
       form.set("customerId", activeCustomerId);
+      setStatus("I found you — saving your visitor profile…");
       const response = await fetch("/newCustomerFace", { method: "POST", body: form });
       const result = await response.json().catch(() => null);
       if (!response.ok) throw new Error(result?.error || "Could not create the visitor session.");
       if (!isCurrent(activeCustomerId, token)) return;
       setStatus("I found you — connecting voice…");
-      await robot.current.stop();
+      queueRobot(() => robot.current.stop());
       await connectVoice(activeCustomerId, token);
     } catch (error) {
       if (isCurrent(activeCustomerId, token)) {

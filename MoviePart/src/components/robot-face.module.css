@@ -1,73 +1,37 @@
 .host {
-  background: #202a25;
-  color: #f7f6f1;
+  min-height: 0;
+  height: 100%;
   display: grid;
-  grid-template-columns: minmax(0, 1.15fr) minmax(300px, .85fr);
-  border-radius: 18px;
-  margin: 12px 0 28px;
-  overflow: hidden;
+  grid-template-rows: minmax(0, 1fr) auto;
+  color: #f7f6f1;
+  background: #202a25;
 }
-.face { min-height: 420px; display: flex; flex-direction: column; justify-content: center; align-items: center; color: #d8ee93; }
-.portrait { width: min(100%, 640px); display: block; overflow: visible; }
+.face { min-height: 0; display: grid; place-items: center; color: #d8ee93; }
+.portrait { width: min(100%, 1050px); height: 100%; max-height: 100%; overflow: visible; }
 .eyes { transform-box: fill-box; transform-origin: center; animation: blink 7s ease-in-out infinite; }
 .talkingMouth { display: none; transform-origin: 300px 296px; }
 .host[data-speaking="true"] .smile { display: none; }
-.host[data-speaking="true"] .talkingMouth { display: block; animation: talking 420ms ease-in-out infinite alternate; }
-.host[data-expression="gentle"] .eyes { animation: none; }
-.faceState { color: #d8ee93; font-size: 14px; margin: -24px 0 30px; }
-.conversation { align-self: center; padding: 48px 44px 42px 12px; }
-.conversation h2 { font: 400 clamp(32px, 3.6vw, 54px)/1.13 Georgia, serif; letter-spacing: -.02em; max-width: 16ch; text-wrap: balance; }
-.caption { font-size: clamp(17px, 1.7vw, 21px); line-height: 1.65; max-width: 40ch; color: #e1e8d9; margin-top: 22px; }
-.actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 28px; }
-.primary { color: #202a25; background: #d8ee93; border: 1px solid #d8ee93; }
-.primary:hover:not(:disabled) { background: #e8f6b9; }
-.secondary { color: #f7f6f1; background: transparent; border: 1px solid #b6c5b4; }
-.secondary:hover:not(:disabled) { background: #344439; }
-.voiceControls { display: flex; gap: 8px 18px; flex-wrap: wrap; margin-top: 12px; }
-.voiceControls button, .bottomBar button { color: #d8ee93; border: 0; background: transparent; text-decoration: underline; text-underline-offset: 4px; padding-inline: 0; font-size: 14px; }
-.host :is(button, video):focus-visible { outline: 3px solid #d8ee93; outline-offset: 5px; }
-.host button { min-height: 48px; }
-.host button:disabled { background: #39483d; color: #ced8c7; border-color: #889982; }
-.voiceNote { font-size: 13px; line-height: 1.6; color: #cad6c4; max-width: 46ch; margin-top: 8px; }
-.error { font-size: 14px; color: #ffdec5; line-height: 1.6; margin-top: 12px; max-width: 48ch; }
-.bottomBar { grid-column: 1 / -1; padding: 10px 26px; border-top: 1px solid #50634f; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.bottomBar > span { color: #cad6c4; font-size: 13px; }
-.movie { grid-column: 1 / -1; padding: 24px; }
-.movieHeading { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 18px; }
-.movieHeading h2 { font: 400 30px/1.2 Georgia, serif; }
-.movieHeading span { color: #cad6c4; font-size: 14px; }
-.movie video { display: block; width: 100%; max-height: 75svh; aspect-ratio: 16 / 9; background: #101611; border-radius: 10px; }
-.host[data-motion-paused="true"] :is(.eyes, .talkingMouth) { animation: none; }
+.host[data-speaking="true"] .talkingMouth { display: block; }
+.conversation { padding: 0 0 12px; text-align: center; max-height: 48dvh; overflow-y: auto; overscroll-behavior: contain; }
+.conversation h1 { font: 400 clamp(28px, 4vw, 48px)/1.15 Georgia, serif; letter-spacing: -.02em; text-wrap: balance; }
+.caption { font-size: clamp(20px, 2.8vw, 32px); line-height: 1.45; max-width: 48ch; margin: 18px auto 0; color: #e1e8d9; overflow-wrap: anywhere; }
+.host[data-motion-paused="true"] .eyes { animation: none; }
+.host[data-motion-paused="true"] .talkingMouth { display: none; }
+.host[data-motion-paused="true"] .smile { display: block; }
 @keyframes blink {
   0%, 43%, 47%, 100% { transform: scaleY(1); }
   45% { transform: scaleY(.14); }
 }
-@keyframes talking {
-  0% { transform: scale(.85, .35); }
-  45% { transform: scale(1, .85); }
-  70% { transform: scale(.88, .55); }
-  100% { transform: scale(.94, 1); }
+@media (orientation: landscape) {
+  .host { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); gap: 24px; }
+  .conversation { align-self: center; max-height: 100%; text-align: left; padding: 12px 0; }
+  .caption { margin-inline: 0; }
+}
+@media (max-height: 500px) {
+  .conversation h1 { font-size: 25px; }
+  .caption { font-size: 18px; margin-top: 10px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .eyes, .host[data-speaking="true"] .talkingMouth { animation: none; }
-}
-@media (max-width: 800px) {
-  .host { grid-template-columns: 1fr; border-radius: 12px; }
-  .face { min-height: 0; }
-  .portrait { width: min(100%, 450px); max-height: 36svh; }
-  .faceState { margin: -6px 0 6px; }
-  .conversation { padding: 12px 26px 28px; text-align: center; }
-  .conversation h2 { max-width: 24ch; margin-inline: auto; font-size: 34px; }
-  .caption { margin: 16px auto 0; font-size: 17px; }
-  .actions, .voiceControls { justify-content: center; }
-  .voiceNote, .error { margin-inline: auto; }
-  .bottomBar { padding-inline: 20px; }
-  .movie { padding: 16px; }
-  .movieHeading { align-items: flex-start; flex-direction: column; gap: 8px; }
-}
-@media (max-width: 400px) {
-  .conversation { padding-inline: 18px; }
-  .conversation h2 { font-size: 30px; }
-  .bottomBar { align-items: flex-start; flex-direction: column; gap: 0; }
-  .actions { flex-direction: column; align-items: stretch; }
+  .eyes { animation: none; }
+  .host[data-speaking="true"] .talkingMouth { transform: scale(.9, .55) !important; }
 }
