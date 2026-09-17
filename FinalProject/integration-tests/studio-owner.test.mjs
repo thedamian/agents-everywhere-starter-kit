@@ -27,7 +27,7 @@ test("rotating the actual studio API token cannot acknowledge another owner's pe
   });
   const image = async background => sharp({ create: { width: 12, height: 14, channels: 3, background } }).png().toBuffer();
   await catalog.install({
-    id: "tesla-model-y", exteriorColor: "red", interiorColor: "black", permission: "Synthetic offline test images only.",
+    id: "toyota-camry", exteriorColor: "red", interiorColor: "black", permission: "Synthetic offline test images only.",
     exterior: await image("red"), interior: await image("black"),
   });
   const launcherRuntime = join(directory, "launcher");
@@ -91,7 +91,7 @@ test("rotating the actual studio API token cannot acknowledge another owner's pe
       },
       context: { signals: [] },
       selection: {
-        productId: "tesla-model-y", templateId: "DREAM_ROUTE", heroMode: "LIKENESS",
+        productId: "toyota-camry", templateId: "DREAM_ROUTE", heroMode: "LIKENESS",
         productionMode: "movie-first", enableHeroVideo: false, videoProvider: null,
         storyFormat: "four-shot", renderLayout: "storyboard", movieDurationSeconds: null,
       },

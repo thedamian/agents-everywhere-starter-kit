@@ -1,6 +1,8 @@
 import ffprobe from "ffprobe-static";
 import { MovieError, videoArtifactSchema, type CharacterReference, type MovieJob, type MoviePlan, type StoryboardFrame, type VideoArtifact } from "../domain";
 import { savedVideoSegments } from "../domain/video-sequence-state";
+import { activeVideoProvider } from "../domain/video-sequence-state";
+import { validateHeroEndpoints } from "../jobs/retry";
 import type { GenerationContext, MovieCheckpoint, MovieConfig, VideoService } from "../domain/services";
 import { createContinuationReference } from "../render/continuation";
 import { probeMedia } from "../render/probe";
@@ -16,11 +18,16 @@ export async function generateVideoSequence(
   context: GenerationContext, checkpoint: MovieCheckpoint, config: MovieConfig,
   dependencies: VideoSequenceDependencies,
 ): Promise<VideoArtifact[]> {
-  const provider = job.request.video_provider === "openai-sora" ? "OpenAI Sora" : "Google Veo";
-  if (!job.request.video_provider || plan.videoProvider !== job.request.video_provider) {
+  const selectedProvider = activeVideoProvider(job);
+  const provider = selectedProvider === "openai-sora" ? "OpenAI Sora" : "Google Veo";
+  if (!selectedProvider || plan.videoProvider !== selectedProvider) {
     throw new MovieError("INVALID_VIDEO_PLAN", "A generated animation sequence requires the saved plan's explicit video provider.", 409);
   }
   const segments = savedVideoSegments(job);
+  const firstSegment = segments[0];
+  const heroEndpoints = selectedProvider === "google-veo" && !firstSegment.clip && !firstSegment.operationId && !firstSegment.submitted
+    ? validateHeroEndpoints(job)
+    : undefined;
   const checkpointSegments = () => checkpoint({ videoSegments: structuredClone(segments) });
   const validateClip = async (clip: VideoArtifact) => {
     if (!videoArtifactSchema.safeParse(clip).success || clip.provider !== provider || clip.shotId !== plan.heroShotId) {
@@ -91,6 +98,7 @@ export async function generateVideoSequence(
       plan, character, product: job.product, frames,
       ...(segment.operationId ? { operationId: segment.operationId } : {}),
       ...(continuation ? { continuation } : {}),
+      ...(segment.index === 0 && heroEndpoints ? { heroEndpoints } : {}),
     }, scoped);
     if (!clip) throw new MovieError("ANIMATION_REQUIRED", `Animation segment ${segment.index + 1} is not available. A shorter movie or still-only segment was not substituted.`, 502);
     await validateClip(clip);

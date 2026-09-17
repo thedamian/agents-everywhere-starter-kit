@@ -13,7 +13,7 @@ const metadataSchema = z.object({
 }).strict();
 
 export async function uploadProductReferences(request: Request, productId: string, catalog: ProductCatalog) {
-  if (!vehicleChoice(productId)) throw new MovieError("UNKNOWN_PRODUCT", "Choose Tesla Model Y or Toyota Tundra Hybrid.", 400);
+  if (!vehicleChoice(productId)) throw new MovieError("UNKNOWN_PRODUCT", "Choose a supported Toyota or Lexus vehicle.", 400);
   const contentType = request.headers.get("content-type");
   if (!contentType?.toLowerCase().startsWith("multipart/form-data;")) throw new MovieError("INVALID_UPLOAD", "Upload vehicle references as multipart/form-data.", 415);
   const bytes = await boundedBody(request, 2 * MAX_IMAGE_BYTES + 16 * 1024);

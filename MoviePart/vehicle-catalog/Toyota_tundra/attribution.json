@@ -1,0 +1,21 @@
+{
+  "displayName": "Toyota Tundra",
+  "make": "Toyota",
+  "model": "Tundra",
+  "exterior": {
+    "filename": "exterior.jpg",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:22_Toyota_Tundra_SR5.jpg",
+    "directUrl": "https://upload.wikimedia.org/wikipedia/commons/a/af/22_Toyota_Tundra_SR5.jpg",
+    "license": "CC0 1.0",
+    "author": "HJUdall",
+    "transformation": "Wikimedia Commons thumbnail service scaled the source image to 1920x1440 pixels after the direct URL was rate-limited; no local pixel transformation was applied."
+  },
+  "interior": {
+    "filename": "interior.jpg",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:2023_Toyota_Tundra_interior.jpg",
+    "directUrl": "https://upload.wikimedia.org/wikipedia/commons/0/0a/2023_Toyota_Tundra_interior.jpg",
+    "license": "CC BY-SA 4.0",
+    "author": "deathpallie325",
+    "transformation": "Wikimedia Commons thumbnail service scaled the source image to 1920x1080 pixels after the direct URL was rate-limited; no local pixel transformation was applied."
+  }
+}

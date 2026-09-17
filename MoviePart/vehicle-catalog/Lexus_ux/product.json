@@ -1,0 +1,22 @@
+{
+  "id": "lexus-ux",
+  "version": 1,
+  "name": "Lexus UX",
+  "make": "Lexus",
+  "model": "UX",
+  "exteriorColor": "As photographed",
+  "interiorColor": null,
+  "appearance": "The exact Lexus UX shown in the supplied exterior and interior photographs. Preserve its body generation, lights, grille, wheels, paint, cabin and trim; do not substitute another model or configuration.",
+  "approvedClaims": [],
+  "usagePermission": "Exterior photo by Mr.choppers, licensed CC BY-SA 3.0, source: https://commons.wikimedia.org/wiki/File:2024_Lexus_UX_250h_in_Eminent_White_Pearl,_rear_right.jpg. Interior photo by Mariordo (Mario Roberto Durán Ortiz), licensed CC BY-SA 4.0, source: https://commons.wikimedia.org/wiki/File:Interior_Lexus_UX300e_Expo_2022_CRI_4908.jpg.",
+  "images": [
+    {
+      "file": "exterior.jpg",
+      "role": "front_three_quarter"
+    },
+    {
+      "file": "interior.jpg",
+      "role": "interior"
+    }
+  ]
+}

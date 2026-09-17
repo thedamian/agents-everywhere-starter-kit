@@ -179,7 +179,7 @@ test("header and body IDs must match exactly; strict brief, duration and image v
     duration.brief.durationSeconds = 18;
     assert.equal((await f.submit(duration)).status, 400);
     const template = structuredClone(input);
-    (template.brief as unknown as { templateId: string }).templateId = "tesla";
+    (template.brief as unknown as { templateId: string }).templateId = "unsupported-template";
     assert.equal((await f.submit(template)).status, 400);
     const mime = structuredClone(input);
     mime.image.mimeType = "image/jpeg";

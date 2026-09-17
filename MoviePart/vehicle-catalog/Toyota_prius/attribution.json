@@ -1,0 +1,21 @@
+{
+  "displayName": "Toyota Prius",
+  "make": "Toyota",
+  "model": "Prius",
+  "exterior": {
+    "filename": "exterior.jpg",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:2024_Toyota_Prius_XLE_AWD,_front_right,_06-01-2024.jpg",
+    "directUrl": "https://upload.wikimedia.org/wikipedia/commons/4/4a/2024_Toyota_Prius_XLE_AWD%2C_front_right%2C_06-01-2024.jpg",
+    "license": "CC BY-SA 4.0",
+    "author": "MercurySable99",
+    "transformation": "Wikimedia Commons thumbnail service scaled the source image to 1920x1360 pixels after the direct URL was rate-limited; no local pixel transformation was applied."
+  },
+  "interior": {
+    "filename": "interior.jpg",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:2023_Toyota_Prius_Z_2.0L_HEV_(2).jpg",
+    "directUrl": "https://upload.wikimedia.org/wikipedia/commons/f/fe/2023_Toyota_Prius_Z_2.0L_HEV_%282%29.jpg",
+    "license": "CC BY-SA 4.0",
+    "author": "芯正",
+    "transformation": "Wikimedia Commons thumbnail service scaled the source image to 1920x1080 pixels after the direct URL was rate-limited; no local pixel transformation was applied."
+  }
+}

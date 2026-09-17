@@ -183,11 +183,13 @@ export class ShowroomService {
       case 'answer_proposed': {
         this.mutable(record, true);
         if (!view.consent?.personalization) throw new ApiError(403, 'CONSENT_REQUIRED', 'Confirm personalization consent first.');
+        let selectedProduct: ShowroomCatalog['products'][number] | undefined;
         if (action.payload.field === 'selection') {
           const selection = action.payload.value;
           const catalog = await this.catalog(view.sessionId);
           assertExpectedRevision(action.expectedRevision, this.options.authority.session(view.sessionId).revision);
-          if (!catalog.products.some(product => product.id === selection.productId && product.ready)) {
+          selectedProduct = catalog.products.find(product => product.id === selection.productId && product.ready);
+          if (!selectedProduct) {
             throw new ApiError(409, 'PRODUCT_UNAVAILABLE', 'Select an available, approved catalog product.');
           }
         }
@@ -197,7 +199,7 @@ export class ShowroomService {
         const answer = action.payload;
         const readback = answer.field === 'visitor' ? `I understood your name as ${answer.value.displayName}. Is that correct?`
           : answer.field === 'context' ? `Your approved interests are ${answer.value.signals.map(signal => signal.value).join(', ') || 'none'}${answer.value.customerFirstName ? `; first name ${answer.value.customerFirstName}` : ''}${answer.value.city ? `; city ${answer.value.city}` : ''}. Is that correct?`
-          : `Use ${answer.value.productId}, ${answer.value.templateId}, ${answer.value.heroMode}, ${answer.value.productionMode}, ${answer.value.videoProvider ?? 'image motion only'}, ${answer.value.renderLayout}, ${answer.value.movieDurationSeconds ?? 'standard'} seconds. Is that correct?`;
+          : `Use ${selectedProduct?.name ?? answer.value.productId}, ${answer.value.templateId}, ${answer.value.heroMode}, ${answer.value.productionMode}, ${answer.value.videoProvider ?? 'image motion only'}, ${answer.value.renderLayout}, ${answer.value.movieDurationSeconds ?? 'standard'} seconds. Is that correct?`;
         this.stage(record, { kind: 'answer', payload: answer, readback });
         this.bump(record, 'showroom_answer_proposed');
         break;

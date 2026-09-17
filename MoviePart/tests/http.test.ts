@@ -9,6 +9,7 @@ import { SessionAuth, validateHost } from "../src/server/auth";
 import { JobStore } from "../src/jobs/store";
 import { LocalMediaRepository } from "../src/server/media";
 import type { MovieConfig } from "../src/domain/services";
+import { vehicleChoices } from "../src/catalog/vehicles";
 
 const base = "http://127.0.0.1:3200";
 const consent = { likeness: true, personalization: true };
@@ -69,17 +70,14 @@ const jobRequest = (cookie: string, value: unknown) => req("/api/movie-jobs", {
   method: "POST", cookie, body: JSON.stringify(value), headers: { "content-type": "application/json" },
 });
 
-test("config DTO is direct, private, establishes a session, and reports missing catalog honestly", async t => {
+test("config DTO exposes the downloaded Toyota and Lexus catalog as ready", async t => {
   const { handlers } = await fixture(t, false);
   const response = await handlers.config(req("/api/movie-config"));
   assert.equal(response.status, 200);
   const data = await response.json();
   assert.deepEqual(Object.keys(data).sort(), ["products", "providers", "renderer", "templates", "worker"]);
   assert.equal(data.templates.length, 4);
-  assert.deepEqual(data.products, [
-    { id: "tesla-model-y", name: "Tesla Model Y", ready: false },
-    { id: "toyota-tundra-hybrid", name: "Toyota Tundra Hybrid", ready: false },
-  ]);
+  assert.deepEqual(data.products, vehicleChoices.map(({ id, name }) => ({ id, name, ready: true })));
   assert.equal(data.worker.available, false);
   assert.equal(data.renderer.message, "Explicit test renderer.");
   assert.match(response.headers.get("cache-control")!, /no-store/);

@@ -1,0 +1,21 @@
+{
+  "displayName": "Lexus RC",
+  "make": "Lexus",
+  "model": "RC",
+  "exterior": {
+    "filename": "exterior.jpg",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:Lexus_RC_300h_facelift_front.jpg",
+    "directUrl": "https://upload.wikimedia.org/wikipedia/commons/9/92/Lexus_RC_300h_facelift_front.jpg",
+    "license": "CC BY 2.0",
+    "author": "Rutger van der Maar",
+    "transformation": "Wikimedia Commons thumbnail service scaled the source image to 1920x1261 pixels after the direct URL was rate-limited; no local pixel transformation was applied."
+  },
+  "interior": {
+    "filename": "interior.jpg",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:2018_Lexus_RC_350_GSC10_(interior).jpg",
+    "directUrl": "https://upload.wikimedia.org/wikipedia/commons/e/e4/2018_Lexus_RC_350_GSC10_%28interior%29.jpg",
+    "license": "CC BY-SA 4.0",
+    "author": "Ethan Llamas",
+    "transformation": "Wikimedia Commons thumbnail service scaled the source image to 1920x1440 pixels after the direct URL was rate-limited; no local pixel transformation was applied."
+  }
+}

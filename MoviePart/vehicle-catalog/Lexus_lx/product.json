@@ -1,0 +1,22 @@
+{
+  "id": "lexus-lx",
+  "version": 1,
+  "name": "Lexus LX",
+  "make": "Lexus",
+  "model": "LX",
+  "exteriorColor": "As photographed",
+  "interiorColor": null,
+  "appearance": "The exact Lexus LX shown in the supplied exterior and interior photographs. Preserve its body generation, lights, grille, wheels, paint, cabin and trim; do not substitute another model or configuration.",
+  "approvedClaims": [],
+  "usagePermission": "Exterior photo by Ethan Llamas, licensed CC BY-SA 4.0, source: https://commons.wikimedia.org/wiki/File:Lexus_LX_600_VJA310_Ultra_Luxury_Sonic_Quartz_01.jpg. Interior photo by Dinkun Chen, licensed CC BY-SA 4.0, source: https://commons.wikimedia.org/wiki/File:LEXUS_LX_600_ULTRA_LUXURY_(J310)_INTERIOR.jpg.",
+  "images": [
+    {
+      "file": "exterior.jpg",
+      "role": "front_three_quarter"
+    },
+    {
+      "file": "interior.jpg",
+      "role": "interior"
+    }
+  ]
+}

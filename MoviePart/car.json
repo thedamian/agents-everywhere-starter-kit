@@ -1,32 +1,30 @@
 {
   "car": {
-    "make_model": "Tesla Model 3 Performance",
-    "trim_mode": "Performance (dual motor, launch acceleration)",
-    "model_year_or_refresh": "2022-2023 (pre-Highland refresh: round steering wheel, chrome-delete window trim)",
+    "make_model": "Toyota Tundra",
+    "trim_mode": "Match the licensed reference photographs",
+    "model_year_or_refresh": "Match the licensed reference photographs",
     "reference_images": {
-      "side_left": "MoviePart/Tesla_model_3/2022_tesla_model-3_sedan_performance_s_oem_1_1600x1067.jpg",
-      "rear_quarter_left": "MoviePart/Tesla_model_3/2022_tesla_model-3_sedan_performance_rq_oem_1_1600x1067.jpg",
-      "front_quarter_left": "MoviePart/Tesla_model_3/2022_tesla_model-3_sedan_performance_fq_oem_7_1600x1067.jpg",
-      "front_quarter_high": "MoviePart/Tesla_model_3/2022_tesla_model-3_sedan_performance_fq_oem_2_1600x1067.jpg"
+      "front_three_quarter": "MoviePart/vehicle-catalog/Toyota_tundra/exterior.jpg",
+      "interior": "MoviePart/vehicle-catalog/Toyota_tundra/interior.jpg"
     },
     "exterior": {
-      "color": "REPLACE_WITH_REAL_CAR_COLOR",
-      "wheels": "20-inch dark turbine-style Performance wheels with low-profile tires and red Performance brake calipers visible behind the spokes",
-      "front_end": "Closed body-color nose and smooth front fascia with lower air intakes and no grille; separate pre-Highland headlights matching the reference photos, no full-width light strip; centered Tesla 'T' badge on the nose",
-      "profile": "Low, coupe-like fastback sedan silhouette with a sloping roofline, short front overhang, flush door handles, and a subtle character line running along the lower doors",
-      "roof": "Full glass panoramic roof with black trim and pillars, matching the reference photos",
-      "badging": "Tesla 'T' logo centered on the front nose; small Tesla 'T' logo on the rear trunk; separate wraparound LED taillights matching the reference photos; no full-width rear light bar and no 'TESLA' wordmark on the trunk"
+      "color": "Match the reference photographs",
+      "wheels": "Match the wheel design and tire proportions in the reference photographs",
+      "front_end": "Preserve the photographed grille, headlights, bumper, badging and body generation",
+      "profile": "Preserve the photographed cab, bed, ride height and body proportions",
+      "roof": "Match the roof and trim shown in the reference photographs",
+      "badging": "Reproduce only visible Toyota and Tundra badging from the licensed references"
     },
     "interior": {
-      "steering": "Traditional round two-spoke steering wheel (not a yoke) with a centered Tesla 'T' badge and physical scroll-wheel/button controls on each spoke",
-      "dash": "Minimalist dashboard with no analog gauge cluster in front of the driver; wide horizontal 15-inch landscape center touchscreen mounted mid-dash; light-toned horizontal trim strip spanning the dash width",
-      "seats": "Front bucket seats with visible bolstering and stitching, light/cream upholstery shown in the reference image",
-      "ambient": "Predominantly black dash, door trim, and headliner contrasted with the light-toned dash trim strip and seat upholstery; no ambient lighting strip visible in the reference images"
+      "steering": "Match the photographed steering wheel, controls and instrument panel",
+      "dash": "Match the photographed dashboard, display layout, vents and trim",
+      "seats": "Match the photographed seat shape, upholstery and stitching",
+      "ambient": "Match the photographed cabin colors, materials and lighting"
     },
     "signature_behavior": {
-      "acceleration": "instant, silent, head-snapping launch — this is the story's 'leap'",
-      "sound": "near-silent; motor whine + tire/wind noise, no engine roar",
-      "startup": "no key; wakes silently, screen lights up"
+      "acceleration": "confident, controlled pickup acceleration appropriate to the photographed vehicle",
+      "sound": "natural road and powertrain sound appropriate to the selected configuration",
+      "startup": "instrument panel and cabin controls illuminate naturally"
     }
   }
 }

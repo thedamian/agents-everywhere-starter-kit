@@ -1,13 +1,23 @@
 import { getMovieFormat, MovieError, type MovieJob, type VideoSegment } from "./index";
 
+export function activeVideoProvider(job: MovieJob): "google-veo" | "openai-sora" | undefined {
+  return job.videoRecoveries?.some(item => item.action === "use-sora") ? "openai-sora" : job.request.video_provider;
+}
+
+export function activeVideoOperations(job: MovieJob, provider: "Google Veo" | "OpenAI Sora") {
+  const superseded = new Set((job.videoRecoveries ?? []).flatMap(item =>
+    item.supersededOperationId ? [item.supersededOperationId] : []));
+  return job.operations.filter(item => item.provider === provider && !superseded.has(item.id));
+}
+
 export function videoClipCount(job: MovieJob): 1 | 2 | 3 {
   return job.request.render_layout === "video-bookends" ? getMovieFormat(job.request.movie_duration_seconds).clipCount : 1;
 }
 
 export function savedVideoSegments(job: MovieJob): VideoSegment[] {
   const count = videoClipCount(job);
-  const provider = job.request.video_provider === "openai-sora" ? "OpenAI Sora" : "Google Veo";
-  const operations = job.operations.filter(item => item.provider === provider);
+  const provider = activeVideoProvider(job) === "openai-sora" ? "OpenAI Sora" : "Google Veo";
+  const operations = activeVideoOperations(job, provider);
   const saved = new Map<number, VideoSegment>();
   for (const segment of job.videoSegments ?? []) {
     if (saved.has(segment.index) || segment.index >= count) {
@@ -16,9 +26,15 @@ export function savedVideoSegments(job: MovieJob): VideoSegment[] {
     saved.set(segment.index, segment);
   }
   const operationIds = new Set<string>();
+  const unclaimedOperations = operations.filter(operation =>
+    !(job.videoSegments ?? []).some(segment => segment.operationId === operation.id));
   return Array.from({ length: count }, (_, index) => {
     const previous = saved.get(index);
-    const operation = count === 1 ? operations.at(-1) : operations[index];
+    const operation = previous?.operationId
+      ? undefined
+      : job.videoSegments
+      ? previous?.submitted ? unclaimedOperations.shift() : undefined
+      : count === 1 ? operations.at(-1) : operations[index];
     if (previous?.operationId && operation && previous.operationId !== operation.id) {
       throw new MovieError("INVALID_VIDEO_STATE", "The saved animation operation does not match its segment.", 409);
     }

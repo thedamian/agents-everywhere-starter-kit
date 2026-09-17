@@ -1,0 +1,22 @@
+{
+  "id": "toyota-crown-signia",
+  "version": 1,
+  "name": "Toyota Crown Signia",
+  "make": "Toyota",
+  "model": "Crown Signia",
+  "exteriorColor": "As photographed",
+  "interiorColor": null,
+  "appearance": "The exact Toyota Crown Signia shown in the supplied exterior and interior photographs. Preserve its body generation, lights, grille, wheels, paint, cabin and trim; do not substitute another model or configuration.",
+  "approvedClaims": [],
+  "usagePermission": "Exterior photo by Elise240SX, licensed CC BY-SA 4.0, source: https://commons.wikimedia.org/wiki/File:2025_Toyota_Crown_Signia_Limited_in_Storm_Cloud,_front_right,_2025-04-14.jpg. Interior photo by Charles from Port Chester, New York, licensed CC0, source: https://commons.wikimedia.org/wiki/File:Toyota_Crown_Signia_Limited_(2026)_(55213727966).jpg.",
+  "images": [
+    {
+      "file": "exterior.jpg",
+      "role": "front_three_quarter"
+    },
+    {
+      "file": "interior.jpg",
+      "role": "interior"
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "id": "toyota-corolla-cross",
+  "version": 1,
+  "name": "Toyota Corolla Cross",
+  "make": "Toyota",
+  "model": "Corolla Cross",
+  "exteriorColor": "As photographed",
+  "interiorColor": null,
+  "appearance": "The exact Toyota Corolla Cross shown in the supplied exterior and interior photographs. Preserve its body generation, lights, grille, wheels, paint, cabin and trim; do not substitute another model or configuration.",
+  "approvedClaims": [],
+  "usagePermission": "Exterior photo by Mr.choppers, licensed CC BY-SA 3.0, source: https://commons.wikimedia.org/wiki/File:2023_Toyota_Corolla_Cross_XLE_4WD_in_Wind_Chill_Pearl,_front_left.jpg. Interior photo by オーバードライブ83, licensed CC BY-SA 4.0, source: https://commons.wikimedia.org/wiki/File:2020_Toyota_Corolla_Cross_1.8_ZSG10R_interior_(20201113).jpg.",
+  "images": [
+    {
+      "file": "exterior.jpg",
+      "role": "front_three_quarter"
+    },
+    {
+      "file": "interior.jpg",
+      "role": "interior"
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "id": "lexus-nx",
+  "version": 1,
+  "name": "Lexus NX",
+  "make": "Lexus",
+  "model": "NX",
+  "exteriorColor": "As photographed",
+  "interiorColor": null,
+  "appearance": "The exact Lexus NX shown in the supplied exterior and interior photographs. Preserve its body generation, lights, grille, wheels, paint, cabin and trim; do not substitute another model or configuration.",
+  "approvedClaims": [],
+  "usagePermission": "Exterior photo by Dinkun Chen, licensed CC BY-SA 4.0, source: https://commons.wikimedia.org/wiki/File:LEXUS_NX350h_China_(21).jpg. Interior photo by Tokumeigakarinoaoshima, licensed CC BY-SA 4.0, source: https://commons.wikimedia.org/wiki/File:Lexus_NX_350h_F_SPORT_2WD_(6AA-AAZH20-AWXLB(F))_interior.jpg.",
+  "images": [
+    {
+      "file": "exterior.jpg",
+      "role": "front_three_quarter"
+    },
+    {
+      "file": "interior.jpg",
+      "role": "interior"
+    }
+  ]
+}

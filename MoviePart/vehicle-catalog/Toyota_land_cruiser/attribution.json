@@ -1,0 +1,21 @@
+{
+  "displayName": "Toyota Land Cruiser",
+  "make": "Toyota",
+  "model": "Land Cruiser",
+  "exterior": {
+    "filename": "exterior.jpg",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:2025_Toyota_Land_Cruiser_1958_Edition_in_Meteor_Shower,_front_left.jpg",
+    "directUrl": "https://upload.wikimedia.org/wikipedia/commons/b/b3/2025_Toyota_Land_Cruiser_1958_Edition_in_Meteor_Shower%2C_front_left.jpg",
+    "license": "CC BY-SA 4.0",
+    "author": "Mr.choppers",
+    "transformation": "Wikimedia Commons thumbnail service scaled the source image to 1920x1206 pixels after the direct URL was rate-limited; no local pixel transformation was applied."
+  },
+  "interior": {
+    "filename": "interior.jpg",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:Toyota_LAND_CRUISER_VX_(3BA-TRJ250W-GZTTK)_interior.jpg",
+    "directUrl": "https://upload.wikimedia.org/wikipedia/commons/2/2b/Toyota_LAND_CRUISER_VX_%283BA-TRJ250W-GZTTK%29_interior.jpg",
+    "license": "CC BY-SA 4.0",
+    "author": "Tokumeigakarinoaoshima",
+    "transformation": "Wikimedia Commons thumbnail service scaled the source image to 1920x1440 pixels after the direct URL was rate-limited; no local pixel transformation was applied."
+  }
+}

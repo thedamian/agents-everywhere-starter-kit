@@ -22,14 +22,8 @@ async function storedCredential(file) {
       throw new Error("The stored studio credential is invalid; it will not be replaced.");
     }
     const bytes = Buffer.alloc(259);
-    let length = 0;
-    while (length < bytes.length) {
-      const { bytesRead } = await handle.read(bytes, length, bytes.length - length, length);
-      if (!bytesRead) break;
-      length += bytesRead;
-    }
-    if (length !== info.size) throw new Error("The stored studio credential changed while being read; restart was refused.");
-    const token = bytes.subarray(0, length).toString("utf8").replace(/\r?\n$/, "");
+    const { bytesRead } = await handle.read(bytes, 0, bytes.length, 0);
+    const token = bytes.subarray(0, bytesRead).toString("utf8").replace(/\r?\n$/, "");
     if (!tokenPattern.test(token)) throw new Error("The stored studio credential is invalid; it will not be replaced.");
     return token;
   } finally {

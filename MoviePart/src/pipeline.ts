@@ -8,10 +8,11 @@ import { getTemplate } from "./templates";
 import { createOpenAIServices } from "./providers/openai";
 import { createVeoService } from "./providers/google";
 import { createRenderer, validateRenderInput } from "./render";
-import { validateRetryAssets } from "./jobs/retry";
+import { validateHeroEndpoints, validateRetryAssets } from "./jobs/retry";
 import { extractStoryboard } from "./render/extract-storyboard";
 import { createOpenAIVideoService } from "./providers/openai/video";
 import { generateVideoSequence } from "./video/sequence";
+import { activeVideoOperations, activeVideoProvider } from "./domain/video-sequence-state";
 
 export interface PipelineServices {
   references: ReferenceService;
@@ -85,42 +86,52 @@ export async function executeMovie(
     }, context);
     await checkpoint({ plan });
   }
+  const selectedVideoProvider = activeVideoProvider(job);
+  const renderPlan = selectedVideoProvider && plan.videoProvider !== selectedVideoProvider
+    ? { ...plan, videoProvider: selectedVideoProvider } : plan;
   if (movieFirst) {
     if (!context.saveSceneFrame) throw new MovieError("SCENE_STORE_UNAVAILABLE", "Movie-first rendering requires private scene checkpoints.");
+    const movieFirstPlan = job.videoRecoveries?.some(item => item.action === "use-image-motion")
+      ? { ...renderPlan, videoProvider: undefined } : renderPlan;
     let movie = job.result;
     if (!movie) {
       await context.warn("Movie-first output uses cinematic motion from generated visuals, not fully generated moving footage. Continuity scoring does not block this mode.");
       const sceneContext: GenerationContext = { ...context, saveFrame: context.saveSceneFrame };
       const frames = await storyboard.generate({
-        plan, character, product: job.product,
+        plan: movieFirstPlan, character, product: job.product,
         existingFrames: [...job.frames, ...(job.sceneFrames ?? [])].filter(frame => frame.source !== "extracted"),
         productionMode: "movie-first",
       }, sceneContext);
-      validateRenderInput({ plan, frames, hero: job.hero, productionMode: "movie-first" }, job.id);
+      validateRenderInput({ plan: movieFirstPlan, frames, hero: null, productionMode: "movie-first" }, job.id);
       await context.report({ stage: "ASSEMBLING", message: "Making the movie before extracting its storyboard.", provider: "FFmpeg" });
-      movie = await renderer.render({ plan, frames, hero: job.hero, productionMode: "movie-first", renderLayout: job.request.render_layout }, context);
+      movie = await renderer.render({ plan: movieFirstPlan, frames, hero: null, productionMode: "movie-first" }, context);
       await checkpoint({ result: movie });
     }
     await context.report({ stage: "EXTRACTING_STORYBOARD", message: "Movie encoded. Extracting storyboard images from its actual frames.", provider: "FFmpeg" });
-    await (services?.extract ?? extractStoryboard)(config, plan, movie, context);
+    await (services?.extract ?? extractStoryboard)(config, movieFirstPlan, movie, context);
     return movie;
   }
-  let frames = await storyboard.generate({ plan, character, product: job.product, existingFrames: job.frames }, context);
+  let frames = await storyboard.generate({ plan: renderPlan, character, product: job.product, existingFrames: job.frames }, context);
   if (context.finalizeStoryboard) frames = await context.finalizeStoryboard();
   let hero = job.hero;
-  validateRenderInput({ plan, frames, hero }, job.id);
+  validateRenderInput({ plan: renderPlan, frames, hero }, job.id);
+  const veoOperation = selectedVideoProvider === "google-veo" ? activeVideoOperations(job, "Google Veo").at(-1)?.id : undefined;
+  const heroPreviouslyAttempted = job.heroAttempted || !!veoOperation;
+  const heroEndpoints = selectedVideoProvider === "google-veo" && job.request.enable_hero_video && !hero && !heroPreviouslyAttempted
+    ? validateHeroEndpoints(job, frames)
+    : undefined;
   if (job.request.render_layout === "video-bookends" && getMovieFormat(job.request.movie_duration_seconds).clipCount > 1) {
-    const video = services?.video ?? (job.request.video_provider === "openai-sora" ? createOpenAIVideoService(config) : createVeoService(config));
-    const videoClips = await (services?.sequence ?? generateVideoSequence)(job, plan, character, frames, context, checkpoint, config, { video });
+    const video = services?.video ?? (selectedVideoProvider === "openai-sora" ? createOpenAIVideoService(config) : createVeoService(config));
+    const videoClips = await (services?.sequence ?? generateVideoSequence)(job, renderPlan, character, frames, context, checkpoint, config, { video });
     const result = await renderer.render({
-      plan, frames, hero: videoClips[0], videoClips,
+      plan: renderPlan, frames, hero: videoClips[0], videoClips,
       renderLayout: job.request.render_layout, movieDurationSeconds: job.request.movie_duration_seconds,
     }, context);
     requireRenderLayout(result, job.request.render_layout, job.request.movie_duration_seconds);
     return result;
   }
-  if (job.request.video_provider === "openai-sora") {
-    if (plan.videoProvider !== "openai-sora") throw new MovieError("INVALID_VIDEO_PLAN", "Create a reviewed, car-only Sora hero plan before generating animation.");
+  if (selectedVideoProvider === "openai-sora") {
+    if (renderPlan.videoProvider !== "openai-sora") throw new MovieError("INVALID_VIDEO_PLAN", "Create a reviewed, car-only Sora hero plan before generating animation.");
     const operation = job.operations.filter(item => item.provider === "OpenAI Sora").at(-1)?.id;
     if (!hero) {
       if (job.heroAttempted && !operation) {
@@ -132,43 +143,42 @@ export async function executeMovie(
         message: operation ? "Resuming the existing OpenAI video operation without submitting another render." : "Generating the required car-only animation with OpenAI Sora 2 Pro.",
       });
       hero = await (services?.video ?? createOpenAIVideoService(config)).generate({
-        plan, character, product: job.product, frames, ...(operation ? { operationId: operation } : {}),
+        plan: renderPlan, character, product: job.product, frames, ...(operation ? { operationId: operation } : {}),
       }, context);
       if (!hero) throw new MovieError("ANIMATION_REQUIRED", "The OpenAI animated clip is not available. A still-only movie was not substituted.");
       await checkpoint({ hero });
     }
     if (hero.provider !== "OpenAI Sora") throw new MovieError("ANIMATION_REQUIRED", "This movie requires a genuine OpenAI Sora clip.");
     await context.report({ stage: "ASSEMBLING", provider: "FFmpeg", message: "Mixing approved still shots with the generated OpenAI animation." });
-    const result = await renderer.render({ plan, frames, hero, renderLayout: job.request.render_layout, movieDurationSeconds: job.request.movie_duration_seconds }, context);
+    const result = await renderer.render({ plan: renderPlan, frames, hero, renderLayout: job.request.render_layout, movieDurationSeconds: job.request.movie_duration_seconds }, context);
     requireRenderLayout(result, job.request.render_layout, job.request.movie_duration_seconds);
     if (result.mode !== "hybrid-video") throw new MovieError("ANIMATION_REQUIRED", "The final output did not include the required generated animation.");
     return result;
   }
-  const veoOperation = job.operations.filter(operation => operation.provider === "Google Veo").at(-1)?.id;
-  const heroPreviouslyAttempted = job.heroAttempted || !!veoOperation;
-  if (job.request.video_provider === "google-veo" && !hero && job.heroAttempted && !veoOperation) {
+  if (selectedVideoProvider === "google-veo" && !hero && job.heroAttempted && !veoOperation) {
     throw new MovieError("VEO_SUBMISSION_UNCERTAIN", "A previous Veo submission was marked as started, but no operation ID was saved. Inspect that submission before authorizing a replacement; retry will not submit another paid video blindly.", 409);
   }
-  if (job.request.enable_hero_video && !hero && (!heroPreviouslyAttempted || (job.request.video_provider === "google-veo" && veoOperation))) {
+  if (job.request.enable_hero_video && !hero && (!heroPreviouslyAttempted || (selectedVideoProvider === "google-veo" && veoOperation))) {
     await context.report({ stage: "GENERATING_HERO", message: veoOperation
       ? "Resuming the saved Veo animation without another video submission."
       : "Preparing the hero-video animation." });
     hero = await (services?.video ?? createVeoService(config)).generate({
-      plan, character, product: job.product, frames, ...(veoOperation ? { operationId: veoOperation } : {}),
+      plan: renderPlan, character, product: job.product, frames, ...(veoOperation ? { operationId: veoOperation } : {}),
+      ...(heroEndpoints ? { heroEndpoints } : {}),
     }, { ...context, beforeVideoSubmission: () => checkpoint({ heroAttempted: true }) });
     await checkpoint({ hero });
   } else if (job.request.enable_hero_video && !hero && heroPreviouslyAttempted) {
-    await context.warn(job.request.video_provider === "google-veo"
+    await context.warn(selectedVideoProvider === "google-veo"
       ? "The previously attempted Veo operation was not blindly resubmitted. This movie still requires a completed animation clip."
       : "The previously attempted optional hero video was not resubmitted. Keeping the approved storyboard-motion segment.");
   }
-  if (job.request.video_provider === "google-veo" && hero?.provider !== "Google Veo") {
+  if (selectedVideoProvider === "google-veo" && hero?.provider !== "Google Veo") {
     throw new MovieError("ANIMATION_REQUIRED", "The required Google Veo animation was not completed. No still-only movie was substituted. Check the saved provider warnings before another attempt.", 502);
   }
   await context.report({ stage: "ASSEMBLING", message: `Assembling the ${timeline.shotIds.length}-shot advertisement.`, provider: "FFmpeg" });
-  const result = await renderer.render({ plan, frames, hero, renderLayout: job.request.render_layout, movieDurationSeconds: job.request.movie_duration_seconds }, context);
+  const result = await renderer.render({ plan: renderPlan, frames, hero, renderLayout: job.request.render_layout, movieDurationSeconds: job.request.movie_duration_seconds }, context);
   requireRenderLayout(result, job.request.render_layout, job.request.movie_duration_seconds);
-  if (job.request.video_provider === "google-veo" && result.mode !== "hybrid-video") {
+  if (selectedVideoProvider === "google-veo" && result.mode !== "hybrid-video") {
     throw new MovieError("ANIMATION_REQUIRED", "The final output did not include the required Veo animation.");
   }
   return result;

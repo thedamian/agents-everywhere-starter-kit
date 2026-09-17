@@ -1,0 +1,21 @@
+{
+  "displayName": "Toyota GR Supra",
+  "make": "Toyota",
+  "model": "GR Supra",
+  "exterior": {
+    "filename": "exterior.jpg",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:D%C3%BClmen,_Auto_Bertels,_Toyota_GR_Supra_--_2021_--_9547.jpg",
+    "directUrl": "https://upload.wikimedia.org/wikipedia/commons/4/4e/D%C3%BClmen%2C_Auto_Bertels%2C_Toyota_GR_Supra_--_2021_--_9547.jpg",
+    "license": "CC BY-SA 4.0",
+    "author": "Dietmar Rabich",
+    "transformation": "Wikimedia Commons thumbnail service scaled the source image to 1920x1280 pixels after the direct URL was rate-limited; no local pixel transformation was applied."
+  },
+  "interior": {
+    "filename": "interior.jpg",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:The_interior_of_Toyota_GR_Supra_RZ_(3BA-DB42-ZRRW).jpg",
+    "directUrl": "https://upload.wikimedia.org/wikipedia/commons/8/87/The_interior_of_Toyota_GR_Supra_RZ_%283BA-DB42-ZRRW%29.jpg",
+    "license": "CC BY-SA 4.0",
+    "author": "Tokumeigakarinoaoshima",
+    "transformation": "Wikimedia Commons thumbnail service scaled the source image to 1920x1440 pixels after the direct URL was rate-limited; no local pixel transformation was applied."
+  }
+}

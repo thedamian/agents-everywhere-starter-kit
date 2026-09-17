@@ -1,0 +1,22 @@
+{
+  "id": "lexus-rc",
+  "version": 1,
+  "name": "Lexus RC",
+  "make": "Lexus",
+  "model": "RC",
+  "exteriorColor": "As photographed",
+  "interiorColor": null,
+  "appearance": "The exact Lexus RC shown in the supplied exterior and interior photographs. Preserve its body generation, lights, grille, wheels, paint, cabin and trim; do not substitute another model or configuration.",
+  "approvedClaims": [],
+  "usagePermission": "Exterior photo by Rutger van der Maar, licensed CC BY 2.0, source: https://commons.wikimedia.org/wiki/File:Lexus_RC_300h_facelift_front.jpg. Interior photo by Ethan Llamas, licensed CC BY-SA 4.0, source: https://commons.wikimedia.org/wiki/File:2018_Lexus_RC_350_GSC10_(interior).jpg.",
+  "images": [
+    {
+      "file": "exterior.jpg",
+      "role": "front_three_quarter"
+    },
+    {
+      "file": "interior.jpg",
+      "role": "interior"
+    }
+  ]
+}

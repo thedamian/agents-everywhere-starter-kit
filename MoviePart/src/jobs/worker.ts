@@ -166,23 +166,23 @@ export class MovieWorker {
         current.events.push({ at: new Date().toISOString(), stage: "COMPLETED", message: "Movie ready.", provider: null, shotId: null });
       });
     } catch (error) {
-      if (!await cancellationRequested()) await this.store.update(job.id, current => {
-        const stage = current.status;
-        const aborted = this.controller.signal.aborted;
-        current.error = {
-          code: this.heartbeatFailure?.code ?? (aborted ? "WORKER_ABORTED" : error instanceof MovieError ? error.code : "GENERATION_FAILED"),
-          message: this.heartbeatFailure
-            ? `${this.heartbeatFailure.message} Saved artifacts remain available; paid operations will not be repeated automatically.`
-            : aborted
-            ? "The local worker was stopped. Saved artifacts remain available; paid operations will not be repeated automatically."
-            : error instanceof MovieError ? this.cleanMessage(error.message) : `Generation failed during ${stage}. Saved artifacts were retained.`,
-          stage,
-        };
-        current.status = "FAILED";
-        current.events.push({ at: new Date().toISOString(), stage: "FAILED", message: current.error.message, provider: null, shotId: null });
-      }).catch(updateError => {
-        if (!(updateError instanceof MovieError && updateError.code === "JOB_CANCELLED")) throw updateError;
-      });
+      if (!await cancellationRequested()) {
+        await this.store.update(job.id, current => {
+          const stage = current.status;
+          const aborted = this.controller.signal.aborted;
+          current.error = {
+            code: this.heartbeatFailure?.code ?? (aborted ? "WORKER_ABORTED" : error instanceof MovieError ? error.code : "GENERATION_FAILED"),
+            message: this.heartbeatFailure
+              ? `${this.heartbeatFailure.message} Saved artifacts remain available; paid operations will not be repeated automatically.`
+              : aborted
+              ? "The local worker was stopped. Saved artifacts remain available; paid operations will not be repeated automatically."
+              : error instanceof MovieError ? this.cleanMessage(error.message) : `Generation failed during ${stage}. Saved artifacts were retained.`,
+            stage,
+          };
+          current.status = "FAILED";
+          current.events.push({ at: new Date().toISOString(), stage: "FAILED", message: current.error.message, provider: null, shotId: null });
+        });
+      }
     } finally {
       clearInterval(cancellationTimer);
       cancellation.abort(new MovieError("JOB_SETTLED", "Movie execution has ended.", 410));

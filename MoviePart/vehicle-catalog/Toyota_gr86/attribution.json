@@ -1,0 +1,21 @@
+{
+  "displayName": "Toyota GR86",
+  "make": "Toyota",
+  "model": "GR86",
+  "exterior": {
+    "filename": "exterior.jpg",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:2022_Toyota_GR86_ZN8_Track_Bred.jpg",
+    "directUrl": "https://upload.wikimedia.org/wikipedia/commons/6/6d/2022_Toyota_GR86_ZN8_Track_Bred.jpg",
+    "license": "CC BY-SA 4.0",
+    "author": "Nathan Dimartino",
+    "transformation": "Wikimedia Commons thumbnail service scaled the source image to 1920x1440 pixels after the direct URL was rate-limited; no local pixel transformation was applied."
+  },
+  "interior": {
+    "filename": "interior.jpg",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:Toyota_GR86_RZ_6AT_(3BA-ZN8-A2F7)_interior.jpg",
+    "directUrl": "https://upload.wikimedia.org/wikipedia/commons/3/32/Toyota_GR86_RZ_6AT_%283BA-ZN8-A2F7%29_interior.jpg",
+    "license": "CC BY-SA 4.0",
+    "author": "Tokumeigakarinoaoshima",
+    "transformation": "Wikimedia Commons thumbnail service scaled the source image to 1920x1440 pixels after the direct URL was rate-limited; no local pixel transformation was applied."
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "displayName": "Toyota bZ4X / bZ",
+  "make": "Toyota",
+  "model": "bZ4X/bZ",
+  "exterior": {
+    "filename": "exterior.jpg",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:Toyota_bZX4_(4).jpg",
+    "directUrl": "https://upload.wikimedia.org/wikipedia/commons/0/06/Toyota_bZX4_%284%29.jpg",
+    "license": "CC BY-SA 4.0",
+    "author": "Fiver, der Hellseher",
+    "transformation": "Wikimedia Commons thumbnail service scaled the source image to 1920x2557 pixels after the direct URL was rate-limited; no local pixel transformation was applied."
+  },
+  "interior": {
+    "filename": "interior.jpg",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:Interior_Toyota_bZ4X_Expo_2022_CRI_4889.jpg",
+    "directUrl": "https://upload.wikimedia.org/wikipedia/commons/0/04/Interior_Toyota_bZ4X_Expo_2022_CRI_4889.jpg",
+    "license": "CC BY-SA 4.0",
+    "author": "Mariordo (Mario Roberto Durán Ortiz)",
+    "transformation": "Wikimedia Commons thumbnail service scaled the source image to 1920x1280 pixels after the direct URL was rate-limited; no local pixel transformation was applied."
+  }
+}

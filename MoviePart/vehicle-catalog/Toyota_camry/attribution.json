@@ -1,0 +1,21 @@
+{
+  "displayName": "Toyota Camry",
+  "make": "Toyota",
+  "model": "Camry",
+  "exterior": {
+    "filename": "exterior.jpg",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:2025_Toyota_Camry_HEV.jpg",
+    "directUrl": "https://upload.wikimedia.org/wikipedia/commons/3/3f/2025_Toyota_Camry_HEV.jpg",
+    "license": "CC BY-SA 4.0",
+    "author": "Wlb5V",
+    "transformation": "Wikimedia Commons thumbnail service scaled the source image to 1920x1280 pixels after the direct URL was rate-limited; no local pixel transformation was applied."
+  },
+  "interior": {
+    "filename": "interior.jpg",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:PIMS_2024_-_All-New_Toyota_Camry_HEV_(dashboard).jpg",
+    "directUrl": "https://upload.wikimedia.org/wikipedia/commons/f/f0/PIMS_2024_-_All-New_Toyota_Camry_HEV_%28dashboard%29.jpg",
+    "license": "CC BY-SA 4.0",
+    "author": "Ethan Llamas",
+    "transformation": "Wikimedia Commons thumbnail service scaled the source image to 1920x1280 pixels after the direct URL was rate-limited; no local pixel transformation was applied."
+  }
+}

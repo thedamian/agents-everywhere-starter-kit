@@ -1,0 +1,22 @@
+{
+  "id": "toyota-bz",
+  "version": 1,
+  "name": "Toyota bZ (BEV)",
+  "make": "Toyota",
+  "model": "bZ (BEV)",
+  "exteriorColor": "As photographed",
+  "interiorColor": null,
+  "appearance": "The exact Toyota bZ (BEV) shown in the supplied exterior and interior photographs. Preserve its body generation, lights, grille, wheels, paint, cabin and trim; do not substitute another model or configuration.",
+  "approvedClaims": [],
+  "usagePermission": "Exterior photo by Fiver, der Hellseher, licensed CC BY-SA 4.0, source: https://commons.wikimedia.org/wiki/File:Toyota_bZX4_(4).jpg. Interior photo by Mariordo (Mario Roberto Durán Ortiz), licensed CC BY-SA 4.0, source: https://commons.wikimedia.org/wiki/File:Interior_Toyota_bZ4X_Expo_2022_CRI_4889.jpg.",
+  "images": [
+    {
+      "file": "exterior.jpg",
+      "role": "front_three_quarter"
+    },
+    {
+      "file": "interior.jpg",
+      "role": "interior"
+    }
+  ]
+}

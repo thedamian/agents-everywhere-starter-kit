@@ -1,0 +1,22 @@
+{
+  "id": "toyota-rav4",
+  "version": 1,
+  "name": "Toyota RAV4",
+  "make": "Toyota",
+  "model": "RAV4",
+  "exteriorColor": "As photographed",
+  "interiorColor": null,
+  "appearance": "The exact Toyota RAV4 shown in the supplied exterior and interior photographs. Preserve its body generation, lights, grille, wheels, paint, cabin and trim; do not substitute another model or configuration.",
+  "approvedClaims": [],
+  "usagePermission": "Exterior photo by LuvsMG481, licensed CC BY-SA 4.0, source: https://commons.wikimedia.org/wiki/File:2024_Toyota_RAV4_Cruiser_Hybrid_front.jpg. Interior photo by Vauxford, licensed CC BY-SA 4.0, source: https://commons.wikimedia.org/wiki/File:2019_Toyota_RAV4_Interior.jpg.",
+  "images": [
+    {
+      "file": "exterior.jpg",
+      "role": "front_three_quarter"
+    },
+    {
+      "file": "interior.jpg",
+      "role": "interior"
+    }
+  ]
+}

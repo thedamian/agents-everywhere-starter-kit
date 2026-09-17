@@ -1,0 +1,22 @@
+{
+  "id": "lexus-rx",
+  "version": 1,
+  "name": "Lexus RX",
+  "make": "Lexus",
+  "model": "RX",
+  "exteriorColor": "As photographed",
+  "interiorColor": null,
+  "appearance": "The exact Lexus RX shown in the supplied exterior and interior photographs. Preserve its body generation, lights, grille, wheels, paint, cabin and trim; do not substitute another model or configuration.",
+  "approvedClaims": [],
+  "usagePermission": "Exterior photo by Alexander-93, licensed CC BY-SA 4.0, source: https://commons.wikimedia.org/wiki/File:Lexus_RX_450h%2B_(AALH16)_1X7A1930.jpg. Interior photo by Szeremeta, licensed CC BY 4.0, source: https://commons.wikimedia.org/wiki/File:2026_Lexus_RX_450h%2B_Interior.jpg.",
+  "images": [
+    {
+      "file": "exterior.jpg",
+      "role": "front_three_quarter"
+    },
+    {
+      "file": "interior.jpg",
+      "role": "interior"
+    }
+  ]
+}

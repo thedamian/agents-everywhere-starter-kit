@@ -39,7 +39,7 @@ test('shared executable studio input and generated portable type adapt to the co
     enable_hero_video: selected.enableHeroVideo,
     idempotency_key: examples.AcceptedStudioSnapshotSchema.snapshotId,
   });
-  assert.equal(request.product_id, 'model-y');
+  assert.equal(request.product_id, 'toyota-camry');
   assert.equal(request.video_provider, 'google-veo');
   assert.equal(request.customer_reference_asset_ids.length, 1);
 });

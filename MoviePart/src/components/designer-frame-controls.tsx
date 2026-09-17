@@ -30,3 +30,21 @@ export function DesignerFrameControls({ frame, candidates, disabled, reviewAllow
       : "Image decisions unlock during storyboard review or after a failed attempt. Rendering and completed movies are locked."}</p>
   </div>;
 }
+
+export function HeroEndpointControls({ frame, start, end, disabled, onChoose }: {
+  frame: StoryboardFrame; start: boolean; end: boolean; disabled: boolean;
+  onChoose: (role: "start" | "end") => void;
+}) {
+  return <div className="hero-endpoint-controls" aria-label={`Veo hero endpoints for ${frame.shotId}`}>
+    <div>
+      <span className={start ? "hero-endpoint-selected" : ""}>{start ? "Hero start" : "Start"}</span>
+      <span className={end ? "hero-endpoint-selected" : ""}>{end ? "Hero end" : "End"}</span>
+    </div>
+    <button type="button" disabled={disabled || start} onClick={() => onChoose("start")}>
+      {start ? "Selected as start" : "Use as hero start"}
+    </button>
+    <button type="button" disabled={disabled || end} onClick={() => onChoose("end")}>
+      {end ? "Selected as end" : "Use as hero end"}
+    </button>
+  </div>;
+}

@@ -20,7 +20,7 @@ import {
 
 const consent = { policyVersion: 'showroom-v1', personalization: true, capture: true, likeness: true, providerTransfer: true, calendar: false, motion: false };
 const selection: StudioSelection = {
-  productId: 'tesla-model-y', templateId: 'DREAM_ROUTE', heroMode: 'LIKENESS',
+  productId: 'toyota-camry', templateId: 'DREAM_ROUTE', heroMode: 'LIKENESS',
   productionMode: 'reviewed-storyboard', videoProvider: 'google-veo', enableHeroVideo: true,
   storyFormat: 'four-shot', renderLayout: 'video-bookends', movieDurationSeconds: 15,
 };
@@ -176,6 +176,10 @@ test('calendar confirmation binds full 60-minute readback and survives photograp
 test('fixture catalog never silently aliases demo-car and unknown enrichment is rejected', async t => {
   const f = await setup(t);
   await f.action('consent_recorded', consent); await f.confirm();
+  await f.action('answer_proposed', { field: 'selection', value: selection });
+  assert.match(f.snapshot().pendingAction!.readback, /Toyota Camry/);
+  await f.confirm();
+  assert.equal(f.snapshot().selection?.productId, 'toyota-camry');
   await assert.rejects(f.action('answer_proposed', { field: 'selection', value: { ...selection, productId: 'demo-car' } }), /catalog product/);
   await assert.rejects(f.action('answer_proposed', { field: 'context', value: {
     signals: [{ value: 'inferred preference', source: 'approved-research', visualUseAllowed: true, confidence: 0.9 }],

@@ -2,12 +2,15 @@ import { createHash, randomUUID } from "node:crypto";
 import { mkdir, readdir, rename, rm, stat } from "node:fs/promises";
 import path from "node:path";
 import { z } from "zod";
-import { frameDecisionRequestSchema, jobSchema, productionModeOf, retryRequestSchema, MovieError, type FrameDecisionRequest, type JobRequest, type MovieJob, type ProductReference, type RetryRequest, type StoryboardFrame } from "../domain";
+import { frameDecisionRequestSchema, heroEndpointSelectionRequestSchema, jobSchema, productionModeOf, retryRequestSchema, MovieError, type FrameDecisionRequest, type HeroEndpointSelectionRequest, type JobRequest, type MovieJob, type ProductReference, type RetryRequest, type StoryboardFrame } from "../domain";
 import type { Readiness } from "../domain/http";
 import { atomicWrite, isMissing, processAlive, readJson, withDiskLock } from "../server/files";
 import type { LocalMediaRepository } from "../server/media";
 import { retrySummary, validateSavedPlan } from "./retry";
 import { assertJobNotCancelled, jobReceiptSchema, referencedAssets, type JobReceipt } from "./lifecycle";
+import { assertVeoRecoverable } from "../domain/veo-failure";
+import { hasUncertainVideoSegment, savedVideoSegments } from "../domain/video-sequence-state";
+import { isFrameApproved } from "../domain/storyboard-state";
 
 export const WORKER_HEARTBEAT_MS = 3_000;
 export const WORKER_STALE_MS = 15_000;
@@ -160,7 +163,8 @@ export class JobStore {
     const index = job.retries?.findIndex(retry => retry.idempotencyKey === request.idempotency_key) ?? -1;
     if (index < 0) return null;
     if (job.retries![index].expectedAttempt !== request.expected_attempt ||
-        job.retries![index].productionMode !== request.production_mode) {
+      job.retries![index].productionMode !== request.production_mode ||
+      job.retries![index].videoRecoveryAction !== request.video_recovery_action) {
       throw new MovieError("IDEMPOTENCY_CONFLICT", "This retry key was used with a different attempt. Reuse the original retry request.", 409);
     }
     return { job, attempt: index + 1 };
@@ -175,6 +179,7 @@ export class JobStore {
       if (previous) return previous;
       const job = await this.getOwned(id, ownerId);
       assertJobNotCancelled(job);
+      assertVeoRecoverable(job.error?.code);
       if (request.expected_attempt !== (job.retries?.length ?? 0)) {
         throw new MovieError("STALE_RETRY", "Another retry was already accepted. Refresh this movie before authorizing another attempt.", 409);
       }
@@ -187,6 +192,48 @@ export class JobStore {
       });
       if (claimed) throw new MovieError("JOB_ACTIVE", "The previous worker is still finishing. Wait briefly and retry the same request.", 409);
       validateSavedPlan(job);
+      const recovery = retrySummary(job).videoRecovery;
+      if (recovery?.veoSubmissionUncertain
+          && request.video_recovery_action !== "replace-rejected-clip") {
+        throw new MovieError("VIDEO_SUBMISSION_UNCERTAIN", "The Veo submission may have been accepted without a recoverable operation ID. Explicitly authorize a replacement to make another paid request.", 409);
+      }
+      if (job.error?.code === "VEO_CONTINUITY_REJECTED" && !request.video_recovery_action) {
+        throw new MovieError("VIDEO_RECOVERY_REQUIRED", "This retained clip cannot improve through ordinary retry. Explicitly authorize a replacement clip.", 409);
+      }
+      if (request.video_recovery_action === "replace-rejected-clip") {
+        if (!recovery?.replacementAvailable) {
+          throw new MovieError("VIDEO_REPLACEMENT_LIMIT", "The replacement limit has been reached. An operator may explicitly finish with image motion instead.", 409);
+        }
+        const segments = savedVideoSegments(job);
+        const rejected = segments.filter(segment => !segment.clip && !!segment.operationId);
+        const uncertain = segments.filter(segment => segment.submitted && !segment.clip && !segment.operationId);
+        if (rejected.length + uncertain.length !== 1) {
+          throw new MovieError("VIDEO_RECOVERY_UNAVAILABLE", "Exactly one continuity-rejected retained clip is required for replacement.", 409);
+        }
+        const target = rejected[0] ?? uncertain[0];
+        job.videoRecoveries = [...(job.videoRecoveries ?? []), {
+          action: "replace-rejected-clip", at: new Date().toISOString(),
+          segmentIndex: target.index,
+          ...(target.operationId ? { supersededOperationId: target.operationId } : {}),
+        }];
+        if (segments.length > 1) {
+          job.videoSegments = segments.map(segment => segment.index === target.index
+            ? { index: segment.index, submitted: false, ...(segment.startFrameAssetId ? { startFrameAssetId: segment.startFrameAssetId } : {}) }
+            : segment);
+        } else {
+          job.heroAttempted = false;
+        }
+      }
+      if (request.video_recovery_action === "use-image-motion") {
+        if (!recovery?.imageMotionAvailable) {
+          throw new MovieError("VIDEO_FALLBACK_UNAVAILABLE", "Image-motion fallback is available only after the bounded replacement attempts are exhausted.", 409);
+        }
+        job.videoRecoveries = [...(job.videoRecoveries ?? []), {
+          action: "use-image-motion", at: new Date().toISOString(),
+        }];
+        job.productionMode = "movie-first";
+        job.result = null;
+      }
       if (request.production_mode === "movie-first" && job.request.video_provider) {
         throw new MovieError("ANIMATION_REQUIRED", "A generated-video movie cannot silently switch to animated stills. Create a separate image-only take explicitly.", 409);
       }
@@ -197,11 +244,13 @@ export class JobStore {
   }
 
   private async requeue(job: MovieJob, request: RetryRequest): Promise<{ job: MovieJob; attempt: number }> {
+    assertVeoRecoverable(job.error?.code);
     const at = new Date().toISOString();
     job.retries = [...(job.retries ?? []), {
       idempotencyKey: request.idempotency_key, expectedAttempt: request.expected_attempt,
       requestedAt: at, previousError: job.error,
       ...(request.production_mode ? { productionMode: request.production_mode } : {}),
+      ...(request.video_recovery_action ? { videoRecoveryAction: request.video_recovery_action } : {}),
     }];
     job.status = "RECEIVED";
     job.updatedAt = at;
@@ -210,7 +259,11 @@ export class JobStore {
     if (productionModeOf(job) !== "movie-first") job.result = null;
     job.events.push({
       at, stage: "RECEIVED", provider: null, shotId: null,
-      message: productionModeOf(job) === "movie-first"
+      message: request.video_recovery_action === "use-image-motion"
+        ? "Operator-approved image-motion fallback requested. Keeping the plan and usable visuals; no replacement video will be submitted."
+        : request.video_recovery_action === "replace-rejected-clip"
+        ? "Operator-approved replacement requested for the rejected animation segment. Approved clips and storyboard work are retained."
+        : productionModeOf(job) === "movie-first"
         ? "Movie-first production requested. Keeping the plan and usable visuals; storyboard images will be extracted after encoding."
         : "Explicit retry accepted. Keeping the director plan and approved shots; only unfinished work will run.",
     });
@@ -228,6 +281,7 @@ export class JobStore {
     return this.transaction(async () => {
       const job = await this.getOwned(id, ownerId);
       assertJobNotCancelled(job);
+      assertVeoRecoverable(job.error?.code);
       if (await this.isCancellationRequested(id)) throw new MovieError("JOB_CANCELLED", "This movie was cancelled.", 410);
       const previous = job.designerDecisions?.find(item => item.request.idempotency_key === request.idempotency_key);
       if (previous) {
@@ -272,6 +326,63 @@ export class JobStore {
         const key = `designer-${createHash("sha256").update(request.idempotency_key).digest("hex")}`;
         return (await this.requeue(job, { idempotency_key: key, expected_attempt: request.expected_attempt })).job;
       }
+      await this.write(job);
+      return job;
+    });
+  }
+
+  async selectHeroEndpoint(
+    id: string, ownerId: string, input: HeroEndpointSelectionRequest,
+    verifyFrame: (job: MovieJob, frame: StoryboardFrame) => Promise<void>,
+  ): Promise<MovieJob> {
+    const request = heroEndpointSelectionRequestSchema.parse(input);
+    return this.transaction(async () => {
+      const job = await this.getOwned(id, ownerId);
+      assertJobNotCancelled(job);
+      if (await this.isCancellationRequested(id)) throw new MovieError("JOB_CANCELLED", "This movie was cancelled.", 410);
+      const previous = job.heroEndpointSelections?.find(item => item.request.idempotency_key === request.idempotency_key);
+      if (previous) {
+        if (canonical(previous.request) !== canonical(request)) {
+          throw new MovieError("IDEMPOTENCY_CONFLICT", "This hero-endpoint key was used for different input.", 409);
+        }
+        return job;
+      }
+      if (request.expected_revision !== (job.heroEndpointSelections?.length ?? 0) ||
+          request.expected_attempt !== (job.retries?.length ?? 0)) {
+        throw new MovieError("STALE_HERO_ENDPOINT", "The movie or hero endpoints changed. Refresh before choosing this frame.", 409);
+      }
+      if (job.request.video_provider !== "google-veo" || !job.request.enable_hero_video || !job.plan || !job.character) {
+        throw new MovieError("HERO_ENDPOINT_UNAVAILABLE", "Manual hero endpoints are available only for a planned Google Veo movie.", 409);
+      }
+      if (job.hero || job.heroAttempted || job.operations.some(operation => operation.provider === "Google Veo")) {
+        throw new MovieError("HERO_LOCKED", "Veo has already been attempted for this take. Create a new take to change its hero endpoints.", 409);
+      }
+      if (job.status !== "FAILED" || job.error?.code !== "HERO_ENDPOINT_SELECTION_REQUIRED") {
+        throw new MovieError("HERO_ENDPOINT_UNAVAILABLE", "Wait for storyboard generation to pause before choosing hero endpoints.", 409);
+      }
+      const frame = job.frames.find(item => item.assetId === request.asset_id);
+      if (!frame || frame.source === "extracted" || !job.plan.shots.some(shot => shot.id === frame.shotId)) {
+        throw new MovieError("FRAME_NOT_FOUND", "This movie does not contain that storyboard frame.", 404);
+      }
+      if (!isFrameApproved(frame)) {
+        throw new MovieError("FRAME_NOT_APPROVED", "Choose an approved storyboard image for the Veo endpoint.", 409);
+      }
+      await verifyFrame(job, frame);
+      const otherAssetId = request.role === "start" ? job.heroEndpoints?.endAssetId : job.heroEndpoints?.startAssetId;
+      if (otherAssetId === request.asset_id) {
+        throw new MovieError("HERO_ENDPOINTS_IDENTICAL", "Choose two different storyboard images for the hero start and end.", 409);
+      }
+      const at = new Date().toISOString();
+      job.heroEndpoints = {
+        ...job.heroEndpoints,
+        ...(request.role === "start" ? { startAssetId: request.asset_id } : { endAssetId: request.asset_id }),
+      };
+      job.heroEndpointSelections = [...(job.heroEndpointSelections ?? []), { request, at }];
+      job.updatedAt = at;
+      job.events.push({
+        at, stage: job.status, provider: "Designer", shotId: frame.shotId,
+        message: `Designer selected ${frame.shotId} as the Veo hero ${request.role} frame.`,
+      });
       await this.write(job);
       return job;
     });

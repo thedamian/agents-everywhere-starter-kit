@@ -35,6 +35,9 @@ test('voice uses the actual preserved Live SDP request and strips provider extra
     assert.equal(Object.hasOwn(payload!.session, 'audio'), false);
     assert.deepEqual(payload?.session.delegation.responses.tools.map((tool: { name: string }) => tool.name),
       ['showroom_state', 'showroom_catalog', 'showroom_action', 'showroom_playback']);
+    assert.match(payload!.session.instructions, /Ask which Toyota or Lexus vehicle/);
+    assert.match(payload!.session.instructions, /field selection/);
+    assert.match(payload!.session.instructions, /explicit confirmation records it/);
     assert.doesNotMatch(JSON.stringify(result), /private-test-key|client_secret|must-not-leak/);
   } finally { voice.dispose(); }
 });

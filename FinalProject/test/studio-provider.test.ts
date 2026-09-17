@@ -32,7 +32,7 @@ async function fixture(t: TestContext, behavior: {
       consent: { consentId, inputRevision: 5, recordedAt: Date.now(), policyVersion: 'showroom-v1',
         personalization: true, capture: true, likeness: true, providerTransfer: true, calendar: false, motion: false },
       context: { signals: [{ value: 'hiking', source: 'manual', visualUseAllowed: true, confidence: null }] },
-      selection: { productId: 'tesla-model-y', templateId: 'DREAM_ROUTE', heroMode: 'LIKENESS',
+      selection: { productId: 'toyota-camry', templateId: 'DREAM_ROUTE', heroMode: 'LIKENESS',
         productionMode: 'reviewed-storyboard', enableHeroVideo: true, videoProvider: 'google-veo',
         storyFormat: 'four-shot', renderLayout: 'video-bookends', movieDurationSeconds: 15 },
       captureSet: { captureSetId: randomUUID(), sessionId, consentId, inputRevision: 5,
@@ -57,7 +57,7 @@ async function fixture(t: TestContext, behavior: {
     assert.equal(init.redirect, 'error');
     if (route !== '/api/movie-config') assert.equal(headers.get('x-movie-session-id'), sessionId);
     if (route === '/api/movie-config') return response({
-      products: [{ id: 'tesla-model-y', name: 'Tesla Model Y', ready: true }],
+      products: [{ id: 'toyota-camry', name: 'Toyota Camry', ready: true }],
       templates: [{ id: 'DREAM_ROUTE', name: 'Dream Route' }],
       providers: { openai: { available: true }, veo: { available: true }, openaiVideo: { available: false } },
       worker: { available: true }, renderer: { available: true },

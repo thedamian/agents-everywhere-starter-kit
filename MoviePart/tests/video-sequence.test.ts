@@ -42,6 +42,10 @@ function fixture(duration: MovieDuration = 28) {
     })),
     events: [], warnings: [], error: null, hero: null, result: null, operations: [],
   };
+  job.heroEndpoints = {
+    startAssetId: job.frames[0].assetId,
+    endAssetId: job.frames.at(-1)!.assetId,
+  };
   const assets = new Map<string, { record: AssetRecord; bytes: Uint8Array }>();
   const submissions: number[] = [];
   const resumed: number[] = [];

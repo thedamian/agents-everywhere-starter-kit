@@ -1,0 +1,21 @@
+{
+  "displayName": "Toyota Crown Signia",
+  "make": "Toyota",
+  "model": "Crown Signia",
+  "exterior": {
+    "filename": "exterior.jpg",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:2025_Toyota_Crown_Signia_Limited_in_Storm_Cloud,_front_right,_2025-04-14.jpg",
+    "directUrl": "https://upload.wikimedia.org/wikipedia/commons/1/10/2025_Toyota_Crown_Signia_Limited_in_Storm_Cloud%2C_front_right%2C_2025-04-14.jpg",
+    "license": "CC BY-SA 4.0",
+    "author": "Elise240SX",
+    "transformation": "Wikimedia Commons thumbnail service scaled the source image to 1920x1106 pixels after the direct URL was rate-limited; no local pixel transformation was applied."
+  },
+  "interior": {
+    "filename": "interior.jpg",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:Toyota_Crown_Signia_Limited_(2026)_(55213727966).jpg",
+    "directUrl": "https://upload.wikimedia.org/wikipedia/commons/b/ba/Toyota_Crown_Signia_Limited_%282026%29_%2855213727966%29.jpg",
+    "license": "CC0",
+    "author": "Charles from Port Chester, New York",
+    "transformation": "Wikimedia Commons thumbnail service scaled the source image to 1920x1280 pixels after the direct URL was rate-limited; no local pixel transformation was applied."
+  }
+}

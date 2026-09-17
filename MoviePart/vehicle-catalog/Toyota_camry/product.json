@@ -1,0 +1,22 @@
+{
+  "id": "toyota-camry",
+  "version": 1,
+  "name": "Toyota Camry",
+  "make": "Toyota",
+  "model": "Camry",
+  "exteriorColor": "As photographed",
+  "interiorColor": null,
+  "appearance": "The exact Toyota Camry shown in the supplied exterior and interior photographs. Preserve its body generation, lights, grille, wheels, paint, cabin and trim; do not substitute another model or configuration.",
+  "approvedClaims": [],
+  "usagePermission": "Exterior photo by Wlb5V, licensed CC BY-SA 4.0, source: https://commons.wikimedia.org/wiki/File:2025_Toyota_Camry_HEV.jpg. Interior photo by Ethan Llamas, licensed CC BY-SA 4.0, source: https://commons.wikimedia.org/wiki/File:PIMS_2024_-_All-New_Toyota_Camry_HEV_(dashboard).jpg.",
+  "images": [
+    {
+      "file": "exterior.jpg",
+      "role": "front_three_quarter"
+    },
+    {
+      "file": "interior.jpg",
+      "role": "interior"
+    }
+  ]
+}

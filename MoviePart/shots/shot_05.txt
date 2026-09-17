@@ -9,26 +9,26 @@ REFERENCE_IMAGES (attach actual files; all paths relative to MoviePart):
 person/face.jpg
 person/full_body_front.jpg
 person/half_body.jpg
-Tesla_model_3/2022_tesla_model-3_sedan_performance_s_oem_1_1600x1067.jpg
-Tesla_model_3/2022_tesla_model-3_sedan_performance_rq_oem_1_1600x1067.jpg
-Tesla_model_3/2022_tesla_model-3_sedan_performance_fq_oem_7_1600x1067.jpg
-Tesla_model_3/2022_tesla_model-3_sedan_performance_fq_oem_2_1600x1067.jpg
-Tesla_model_3/Tesla_model_3_interior_driver_side.png
-Tesla_model_3/Tesla_model_3_steering_wheel_front.png
+vehicle-catalog/Toyota_tundra/exterior.jpg
+vehicle-catalog/Toyota_tundra/exterior.jpg
+vehicle-catalog/Toyota_tundra/exterior.jpg
+vehicle-catalog/Toyota_tundra/exterior.jpg
+vehicle-catalog/Toyota_tundra/interior.jpg
+vehicle-catalog/Toyota_tundra/interior.jpg
 
 HERO IDENTITY / WARDROBE: The exact customer in person/face.jpg, not a similar-looking actor. Young adult, late teens to mid-20s, feminine presentation, medium-deep skin with warm undertone, fuller curvy build, average adult height (exact height unknown). Rounded face, full cheeks, large wide-set dark brown eyes, full lips, straight eyebrows, thin slightly winged eyeliner; no glasses or visible facial hair. Black tightly coiled braided/twisted hair just past the shoulders, center-parted as described in person.json, metallic silver tinsel woven through; preserve the actual reference identity and hairstyle. Fully buttoned white cable-knit cardigan with ribbed cuffs and hem, no visible top/undergarment, light blue denim-colored fitted trousers, thin gold necklace with small star-shaped pendant, small stud earrings, light pink/nude manicured nails. Footwear undocumented and outside the frame. full_body_front.jpg anchors build and wardrobe; half_body.jpg supplements identity.
-CAR LOCK: Same 2022-2023 pre-Highland Tesla Model 3 Performance, dual motor, Red Multi-Coat in every frame. Photos anchor shape/details only; ignore white, blue, or black paint. 20-inch dark turbine-style Performance wheels, low-profile tires, red brake calipers; full glass panoramic roof, black pillars, chrome-delete window trim; low fastback sedan, short front overhang, flush handles, subtle lower-door character line. Closed body-color nose, smooth front with lower air intakes, no grille, separate pre-Highland headlights, nose Tesla 'T'. Separate wraparound LED taillights, small trunk Tesla 'T'; no full-width light bar, no 'TESLA' wordmark on the trunk. Photo-authoritative cabin: black bolstered seats and dash/door trim, light wood-toned dash strip, round two-spoke Tesla wheel with physical scroll controls, 15-inch landscape center screen, no driver gauge cluster or decorative ambient strip. Ignore conflicting cream-seat wording in JSON.
+CAR LOCK: Use the same Toyota Tundra shown in the licensed exterior and interior references. The photographs are authoritative: preserve its body generation, grille, lights, cab, bed, wheels, paint, badges, dashboard, controls, seats and trim without mixing another configuration.
 
-SUBJECT: The same customer at the wheel of the red Tesla, POV alternating with her face. Keep the recognizable customer visible in the face shots, belted, hands on the wheel.
-ACTION: Silent instant-torque launch; the dull grey street stretches into streaks of light and the world bends forward around the car; the hero's face is lit with awe. The environment transforms, not the face, car geometry, or paint. This is the signature impossible moment, not an ordinary driving montage.
+SUBJECT: The same customer at the wheel of the photographed Toyota Tundra, POV alternating with her face. Keep the recognizable customer visible in the face shots, belted, hands on the wheel.
+ACTION: Confident, controlled acceleration; the dull grey street stretches into streaks of light and the world bends forward around the car; the hero's face is lit with awe. The environment transforms, not the face, car geometry, or paint. This is the signature impossible moment, not an ordinary driving montage.
 CAMERA: Fast push-in on POV, cut to the hero's face, wide 24mm.
 SETTING: Street dissolving into a tunnel of light, leading to the coastal road of shot 6.
-LIGHTING: Brilliant streaking light trails, grey-to-gold transformation; cinematic anamorphic flares. Keep red paint recognizably red and skin tone faithful under changing light.
+LIGHTING: Brilliant streaking light trails, grey-to-gold transformation; cinematic anamorphic flares. Keep photographed paint recognizably red and skin tone faithful under changing light.
 MOOD: Awe, exhilaration.
 STYLE: Cinematic, subtle grain, anamorphic flares, original time-fold imagery.
-SOUND: The same continuous original instrumental cue swells; a sonic bloom, whoosh and restrained electric motor whine, never an engine roar. No lyrics, narration, dialogue, or film score.
+SOUND: The same continuous original instrumental cue swells; a sonic bloom, whoosh and restrained natural powertrain and road sound. No lyrics, narration, dialogue, or film score.
 
 LOCAL CHOREOGRAPHY: 0-3.5s build: launch from the grey street, fast forward POV as space begins to stretch, cut to the customer's growing awe, still retaining street geography. 3.5-7s breakthrough: light tunnel folds forward, return to clear hero-face detail, grey blooms into gold, finish with the golden coastal road becoming legible ahead. Do not insert extra runtime or reset the music at 3.5s.
 SPLIT RULE: First inspect Astra's actual supported durations and reference limits. If it cannot generate 7s in one request, generate this build and breakthrough as clips/shot_05a.mp4 and clips/shot_05b.mp4, each approximately 3.5s, with these same attached references and continuity locks. Supply the first clip's last frame as a continuity reference for the second if supported, without replacing person/face.jpg. If only longer discrete durations are supported, select and trim usable action to 3.5s each without stretching the total. Concatenate to clips/shot_05.mp4 at exactly 7s. If the maximum is below 3.5s, split further into supported lengths totaling 7s. Preserve all source subclips.
-CONSISTENCY / NEGATIVES: No identity morphs, clothing changes, extra fingers, paint swaps, changed wheels, yoke, grille, rear light bar, or trunk wordmark. No DeLorean, film characters, film logos, copied film footage, iconic film fire tracks, or recognizable film score. No on-screen copy before shot 8.
+CONSISTENCY / NEGATIVES: No identity morphs, clothing changes, extra fingers, paint swaps, changed wheels, body-style changes, or invented trim details. No DeLorean, film characters, film logos, copied film footage, iconic film fire tracks, or recognizable film score. No on-screen copy before shot 8.
 QA: Inspect early/middle/late frames and every split boundary against references. Review moving footage for face/car morphing during the leap. Regenerate only the drifting shot or subclip, then reconfirm the 7s shot length.

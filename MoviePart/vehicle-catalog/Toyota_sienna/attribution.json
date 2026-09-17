@@ -1,0 +1,21 @@
+{
+  "displayName": "Toyota Sienna",
+  "make": "Toyota",
+  "model": "Sienna",
+  "exterior": {
+    "filename": "exterior.jpg",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:Toyota_Sienna_Las_Vegas_Fall_2024.jpg",
+    "directUrl": "https://upload.wikimedia.org/wikipedia/commons/b/ba/Toyota_Sienna_Las_Vegas_Fall_2024.jpg",
+    "license": "CC BY-SA 4.0",
+    "author": "TaurusEmerald",
+    "transformation": "Wikimedia Commons thumbnail service scaled the source image to 1920x1322 pixels after the direct URL was rate-limited; no local pixel transformation was applied."
+  },
+  "interior": {
+    "filename": "interior.jpg",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:TOYOTA_SIENNA_(XL40)_CHINA_VERSION_INTERIOR.jpg",
+    "directUrl": "https://upload.wikimedia.org/wikipedia/commons/a/a1/TOYOTA_SIENNA_%28XL40%29_CHINA_VERSION_INTERIOR.jpg",
+    "license": "CC BY-SA 4.0",
+    "author": "Dinkun Chen",
+    "transformation": "Wikimedia Commons thumbnail service scaled the source image to 1920x3246 pixels after the direct URL was rate-limited; no local pixel transformation was applied."
+  }
+}

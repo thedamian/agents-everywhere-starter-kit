@@ -1,0 +1,21 @@
+{
+  "displayName": "Toyota Highlander",
+  "make": "Toyota",
+  "model": "Highlander",
+  "exterior": {
+    "filename": "exterior.jpg",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:24_Toyota_Highlander_Hybrid_(XU70)_1.jpg",
+    "directUrl": "https://upload.wikimedia.org/wikipedia/commons/7/7d/24_Toyota_Highlander_Hybrid_%28XU70%29_1.jpg",
+    "license": "CC BY-SA 4.0",
+    "author": "Benespit",
+    "transformation": "Wikimedia Commons thumbnail service scaled the source image to 1920x1343 pixels after the direct URL was rate-limited; no local pixel transformation was applied."
+  },
+  "interior": {
+    "filename": "interior.jpg",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:2021_Toyota_Highlander_interior.jpg",
+    "directUrl": "https://upload.wikimedia.org/wikipedia/commons/a/a7/2021_Toyota_Highlander_interior.jpg",
+    "license": "CC BY 4.0",
+    "author": "Baron Maddock",
+    "transformation": "Wikimedia Commons thumbnail service scaled the source image to 1920x1080 pixels after the direct URL was rate-limited; no local pixel transformation was applied."
+  }
+}

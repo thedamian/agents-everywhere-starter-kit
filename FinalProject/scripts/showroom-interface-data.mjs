@@ -94,7 +94,7 @@ export function createShowroomInterfaceData(schemas) {
     mode: "studio", sessionId: id, inputRevision: 2,
     visitor: { visitorId: id, sessionId: id, source: "self_reported", displayName: "Alex" },
     selection: {
-      productId: "model-y", templateId: "DREAM_ROUTE", heroMode: "LIKENESS",
+      productId: "toyota-camry", templateId: "DREAM_ROUTE", heroMode: "LIKENESS",
       productionMode: "reviewed-storyboard", videoProvider: "google-veo", enableHeroVideo: true,
       storyFormat: "four-shot", renderLayout: "storyboard", movieDurationSeconds: null,
     },
@@ -105,7 +105,7 @@ export function createShowroomInterfaceData(schemas) {
   };
   const pendingAction = {
     pendingActionId: id, expectedRevision: 3, inputRevision: 2, confirmationFingerprint: "a".repeat(64),
-    readback: "Use the approved photo and coastal-drive interest to make the selected Model Y studio movie?",
+    readback: "Use the approved photo and coastal-drive interest to make the selected Toyota Camry studio movie?",
     expiresAt: now + 60_000, kind: "studio", payload: studioInput,
   };
   const snapshot = {
@@ -124,12 +124,12 @@ export function createShowroomInterfaceData(schemas) {
       pendingActionId: id, confirmationFingerprint: "a".repeat(64), input: studioInput },
     CalendarDraftSchema: { draftId: id, inputRevision: 2, appointment: {
       startTime: "2027-01-15T15:00:00Z", endTime: "2027-01-15T16:00:00Z", timeZone: "America/New_York",
-      attendees: ["visitor@example.com", "staff@example.com"], subject: "Model Y test drive",
-      location: "Showroom", productId: "model-y", productName: "Model Y",
+      attendees: ["visitor@example.com", "staff@example.com"], subject: "Toyota Camry test drive",
+      location: "Showroom", productId: "toyota-camry", productName: "Toyota Camry",
     } },
     ShowroomReferenceUploadedSchema: { assetId, snapshot },
     ShowroomCatalogSchema: {
-      mode: "studio", products: [{ id: "model-y", name: "Model Y", ready: false }],
+      mode: "studio", products: [{ id: "toyota-camry", name: "Toyota Camry", ready: false }],
       templates: [{ id: "DREAM_ROUTE", name: "Dream Route" }],
       videoProviders: [{ id: "google-veo", available: false }], workerAvailable: false, rendererAvailable: false,
     },

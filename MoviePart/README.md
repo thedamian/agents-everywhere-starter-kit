@@ -91,6 +91,10 @@ Upload receipts allocate IDs before any photo is saved, allowing partial/orphane
 
 The studio defaults to **reviewed storyboards with required Google Veo animation**. Astra handles vision/direction, Flare creates the reference stills, and Veo creates one to three eight-second moving clips after approval. Pan/zoom animation of a photograph does not satisfy the animation requirement.
 
+Before spending a Veo attempt, run `npm run veo:check`. This no-charge preflight verifies that the configured Gemini API key can see the selected Veo 3.1 model and that it advertises long-running video generation. It cannot verify paid-tier billing, remaining quota/capacity, or whether a particular prompt and reference pair will pass Google's safety review; confirm billing and project-specific Veo limits in Google AI Studio. Movie Magic submits the supported first/last-frame profile explicitly: one 8-second 16:9 720p video, approved 1280x720 endpoints, adult-person generation, native audio, and prompt enhancement.
+
+New Veo takes pause after storyboard approval and before any paid video submission. In the creator studio, mark two different approved storyboard cards with **Use as hero start** and **Use as hero end**, then continue the saved movie. Those exact owned 1280x720 images become Veo's first and last frames. The choices are durable and revision-checked; they cannot be changed after a Veo operation is attempted.
+
 The default final cut is **15 seconds: a 3-second opening zoom, 8 seconds of real generated video, and a 4-second closing zoom**. The two bookend images are extracted from the approved video's exact first and last normalized frames. There are no still-only shots in the middle. The four/six-shot storyboard remains the approved reference plan, not a promise to insert every reference image into this cut. The studio sends `render_layout: "video-bookends"`; API callers omitting it retain the legacy storyboard layout.
 
 **Movie length is independent of the reference story arc.** Choose 13, 15, 18, 23, or 28 seconds:
@@ -206,6 +210,8 @@ The [example environment file](.env.example) lists the supported operator settin
 | Settings | Purpose |
 |---|---|
 | `CONTINUITY_POLICY`, `STORYBOARD_MAX_ATTEMPTS`, `STORYBOARD_CONCURRENCY` | Default `practical`, 8 attempts, 2 concurrent shot tasks; allowed policies are `practical`/`strict`, attempts 1–20, concurrency 1–4 |
+
+When Google Veo fails before returning an operation ID or rejects a completed clip during continuity review, the job stops and preserves approved storyboard work. The creator may explicitly authorize at most two replacement Veo submissions; a missing operation ID means the prior request may also have been accepted and charged. The worker never queues a replacement automatically and never switches a Veo job to Sora. After continuity-rejected replacements are exhausted, image-motion fallback remains a separate operator-approved option.
 | `MOVIE_DATA_DIR` | Use `.movie-data` for the private studio/worker root; the separate media service stores its state below `media-service` within this root |
 | `MOVIE_API_TOKEN`, `MOVIE_STUDIO_URL` | Optional machine/CLI access and its destination, default `http://127.0.0.1:3200`; not kiosk or media-service credentials |
 | `FFMPEG_PATH`, `FFPROBE_PATH` | Optional absolute executable overrides; leave unset to use bundled binaries |
@@ -287,6 +293,8 @@ When the main storyboard is approved but the required clip is missing, **Resume 
 
 For required Veo movies, an explicit retry resumes the saved Google operation when generation, download or validation was interrupted. It does not regenerate the storyboard endpoints or submit another video. Validation may incur a vision-model charge; billing, rate-limit and review errors are reported directly rather than claiming that no animation was generated. Untracked submissions are never automatically repeated.
 
+A **finished Veo operation with an error or safety-filtered output is not a pending render**. Re-polling it cannot restart generation. These jobs retain their plan, original references, approved frames and operation ID, but do not offer movie retry or designer resume. Older `VEO_GENERATION_FAILED` jobs receive the same recovery guidance without changing their saved records. New failures distinguish safety filtering from recognized invalid-input, access, quota/capacity and provider errors using only safe categories, never raw provider messages or filter-reason text. The old generic message alone cannot reveal which category caused a previous failure. Review the reported configuration/content issue before explicitly authorizing a new take, which may incur another charge; the app never submits that replacement automatically.
+
 Endpoint preparation is separate from video submission: the durable video-attempt guard is written only after the end frame is approved, immediately before calling Veo. An interrupted preparation can therefore resume on explicit retry, retaining the main storyboard and any approved endpoint. If submission began but no operation ID was saved, recovery is blocked with an explicit uncertain-submission message instead of offering retries that cannot progress.
 
 Longer movies checkpoint each animation segment separately. A retry reuses approved clips, resumes a pending segment by its recorded operation ID, and generates only the remaining segments. No shortened movie is presented as complete when a required segment is missing. A lost segment checkpoint can recover its already-recorded operation; an uncertain submission without an ID remains blocked to avoid duplicate charges.
@@ -299,9 +307,9 @@ Use three or four photos of a consenting teammate; one to four are accepted. Sel
 
 Only JPEG, PNG, and WebP are accepted, bounded to 10 MiB per file, 40 MiB per complete upload, and 25 megapixels per decoded image. Image orientation is normalized and unnecessary metadata is removed.
 
-Place the authorized car reference pack in the private local catalog described in [demo-data](demo-data/README.md). The app deliberately does not ship an invented car, unlicensed reference photos, or a fake successful generation. A curated car's appearance and approved claims must match its real references.
+The checked-in Toyota/Lexus reference library described in [demo-data](demo-data/README.md) makes every listed vehicle selectable without uploading car photographs. The app does not invent a car or report fake generation success. A private operator catalog may override a bundled model when an exact authorized trim is required.
 
-The studio now offers **Tesla Model Y** and **Toyota Tundra Hybrid** separately. Select a vehicle, upload its permitted exterior and interior photos, and record the actual color/source. Each remains marked **add references** until its own pack is ready. This does not change Dwight's synthetic `demo-car-v1` contract.
+The studio offers the Toyota/Lexus showroom catalog, including Tacoma, Camry, bZ, Tundra, Land Cruiser, Lexus LC, ES, RZ and the broader supported lineups. **02 Choose your car** selects the corresponding bundled exterior/interior reference pack immediately. This does not change Dwight's synthetic `demo-car-v1` contract.
 
 ### Renderer, native audio, and optional music
 
@@ -344,7 +352,7 @@ The complete portable contract is [integration/contracts.ts](integration/contrac
 |---|---|
 | `GET /api/movie-config` | Templates, product IDs, local readiness; creates the demo browser session |
 | `POST /api/movie-assets` | Consent-gated private photo upload |
-| `POST /api/movie-products/{productId}/references` | Operator-confirmed exterior/interior references for the selected Tesla or Toyota |
+| `POST /api/movie-products/{productId}/references` | Optional operator override for an exact authorized Toyota or Lexus trim; not required for bundled choices |
 | `POST /api/movie-jobs` | Idempotent asynchronous submission; returns 202 |
 | `GET /api/movie-jobs/{jobId}` | Current status, artifacts, progress, warnings, and errors |
 | `POST /api/movie-jobs/{jobId}/retry` | Explicit, idempotent recovery using the saved plan and approved shots |
@@ -379,7 +387,7 @@ The active kiosk exchanges an expiring operator code for the one authoritative s
 
 The media service accepts authenticated, globally idempotent `POST /jobs`, returns acceptance before generation, exposes `GET /jobs/{providerJobId}`, and serves only same-base relative MP4 paths. `DELETE /jobs/by-key/{jobId}` must tombstone the key, stop renderer-held work and delete local participant assets before acknowledging cleanup. Dwight calls it after downloading the result as well as on cancellation/failure. This brief-based media service is separate from the creator studio's Veo/Sora bookend workflow; selecting a studio video provider does not upgrade this service.
 
-`demo-car-v1` is a synthetic concept brief, not a real Tesla catalog. Its scenes, on-screen copy, CTA and total duration are separate from the creator studio's four/six-shot templates. Agree a real product contract before presenting it as a real-customer product advertisement.
+`demo-car-v1` is a synthetic concept brief, not a real production catalog. Its scenes, on-screen copy, CTA and total duration are separate from the creator studio's four/six-shot templates. Agree a real product contract before presenting it as a real-customer product advertisement.
 
 Provider-side retention and already submitted billable operations are not erased by local deletion. Consult the chosen provider's retention policy; a local cancellation acknowledgement covers renderer-held files/work only.
 

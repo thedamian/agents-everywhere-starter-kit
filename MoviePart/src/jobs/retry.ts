@@ -1,25 +1,45 @@
 import { stat } from "node:fs/promises";
 import sharp from "sharp";
-import { MovieError, productionModeOf, resolveHeroMode, resolveStoryFormat, validatePlan, type MovieJob } from "../domain";
+import { MAX_VIDEO_REPLACEMENTS, MovieError, productionModeOf, resolveHeroMode, resolveStoryFormat, validatePlan, type MovieJob, type RetryRequest } from "../domain";
 import { isFrameApproved, selectStoryboardFrames } from "../domain/storyboard-state";
 import type { MediaRepository } from "../domain/services";
 import { getWardrobeLock, readImage } from "../references";
 import type { GenerationContext } from "../domain/services";
 import type { MovieRetrySummary } from "../../integration/contracts";
-import { hasUncertainVideoSegment } from "../domain/video-sequence-state";
+import { hasUncertainVideoSegment, savedVideoSegments } from "../domain/video-sequence-state";
+import { terminalVeoMessage } from "../domain/veo-failure";
 
 export function retrySummary(job: MovieJob): MovieRetrySummary {
   const frames = selectStoryboardFrames(job.frames, job.plan?.shots.map(shot => shot.id) ?? []);
   const approvedShots = frames.filter(isFrameApproved).length;
   const usable = selectStoryboardFrames([...job.frames, ...(job.sceneFrames ?? [])].filter(frame => frame.source !== "extracted"), job.plan?.shots.map(shot => shot.id) ?? [])
     .filter(frame => isFrameApproved(frame) || frame.designerDecision?.action !== "regenerate" && frame.continuity.verdict !== "REJECT").length;
-  const uncertainVeoSubmission = job.request.video_provider === "google-veo" && job.heroAttempted && !job.hero
-    && !job.operations.some(operation => operation.provider === "Google Veo");
+  const uncertainVeoSubmission = !!(job.request.video_provider === "google-veo" && job.heroAttempted && !job.hero
+    && !job.operations.some(operation => operation.provider === "Google Veo"));
+  const rejectedSegments = job.error?.code === "VEO_CONTINUITY_REJECTED"
+    ? savedVideoSegments(job).filter(segment => !segment.clip && !!segment.operationId) : [];
+  const replacementAttempts = job.videoRecoveries?.filter(item => item.action === "replace-rejected-clip").length ?? 0;
+  const canSwitchUncertainVeo = uncertainVeoSubmission
+    && ["VEO_WORKFLOW_FAILED", "VEO_TIMEOUT"].includes(job.error?.code ?? "");
+  const videoRecovery = job.request.video_provider === "google-veo" && (rejectedSegments.length === 1 || canSwitchUncertainVeo)
+    ? {
+        replacementAttempts,
+        maxReplacementAttempts: MAX_VIDEO_REPLACEMENTS,
+        ...(rejectedSegments[0] ? { rejectedSegment: rejectedSegments[0].index } : {}),
+        veoSubmissionUncertain: canSwitchUncertainVeo,
+        replacementAvailable: replacementAttempts < MAX_VIDEO_REPLACEMENTS,
+        imageMotionAvailable: rejectedSegments.length === 1 && replacementAttempts >= MAX_VIDEO_REPLACEMENTS,
+      }
+    : undefined;
+  const ordinarilyEligible = !uncertainVeoSubmission && !hasUncertainVideoSegment(job);
   return {
     attempt: job.retries?.length ?? 0,
-    eligible: job.status === "FAILED" && job.error?.code !== "JOB_CANCELLED" && !!job.plan && !!job.character && !uncertainVeoSubmission && !hasUncertainVideoSegment(job) && (!job.result || productionModeOf(job) === "movie-first"),
+    eligible: job.status === "FAILED" && job.error?.code !== "JOB_CANCELLED" && !terminalVeoMessage(job.error?.code)
+      && !!job.plan && !!job.character && (ordinarilyEligible || !!videoRecovery)
+      && (!job.result || productionModeOf(job) === "movie-first"),
     approvedShots,
     remainingShots: (job.plan?.shots.length ?? 0) - (productionModeOf(job) === "movie-first" ? usable : approvedShots),
+    ...(videoRecovery ? { videoRecovery } : {}),
   };
 }
 
@@ -47,6 +67,23 @@ export function validateSavedPlan(job: MovieJob): void {
       throw new MovieError("INVALID_SAVED_PLAN", "Saved customer references do not match the original consented request.", 409);
     }
   }
+}
+
+export function validateHeroEndpoints(job: MovieJob, frames = job.frames): { startAssetId: string; endAssetId: string } {
+  const startAssetId = job.heroEndpoints?.startAssetId;
+  const endAssetId = job.heroEndpoints?.endAssetId;
+  if (!startAssetId || !endAssetId) {
+    throw new MovieError("HERO_ENDPOINT_SELECTION_REQUIRED",
+      "Choose one approved storyboard image as the Veo hero start and a different approved image as the hero end before continuing.", 409);
+  }
+  if (startAssetId === endAssetId) {
+    throw new MovieError("HERO_ENDPOINTS_IDENTICAL", "The Veo hero start and end must be different approved storyboard images.", 409);
+  }
+  const selected = [startAssetId, endAssetId].map(assetId => frames.find(frame => frame.assetId === assetId));
+  if (selected.some(frame => !frame || frame.source === "extracted" || !isFrameApproved(frame))) {
+    throw new MovieError("HERO_ENDPOINT_UNAVAILABLE", "A selected Veo hero endpoint is no longer an approved storyboard image.", 409);
+  }
+  return { startAssetId, endAssetId };
 }
 
 export async function validateApprovedFrame(

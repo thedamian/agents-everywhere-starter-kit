@@ -41,7 +41,7 @@
       ]
     },
     "selection": {
-      "productId": "model-y",
+      "productId": "toyota-camry",
       "templateId": "DREAM_ROUTE",
       "heroMode": "LIKENESS",
       "productionMode": "reviewed-storyboard",
@@ -69,7 +69,7 @@
       "expectedRevision": 3,
       "inputRevision": 2,
       "confirmationFingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-      "readback": "Use the approved photo and coastal-drive interest to make the selected Model Y studio movie?",
+      "readback": "Use the approved photo and coastal-drive interest to make the selected Toyota Camry studio movie?",
       "expiresAt": 1800000060000,
       "kind": "studio",
       "payload": {
@@ -83,7 +83,7 @@
           "displayName": "Alex"
         },
         "selection": {
-          "productId": "model-y",
+          "productId": "toyota-camry",
           "templateId": "DREAM_ROUTE",
           "heroMode": "LIKENESS",
           "productionMode": "reviewed-storyboard",
@@ -173,7 +173,7 @@
         "displayName": "Alex"
       },
       "selection": {
-        "productId": "model-y",
+        "productId": "toyota-camry",
         "templateId": "DREAM_ROUTE",
         "heroMode": "LIKENESS",
         "productionMode": "reviewed-storyboard",
@@ -231,10 +231,10 @@
         "visitor@example.com",
         "staff@example.com"
       ],
-      "subject": "Model Y test drive",
+      "subject": "Toyota Camry test drive",
       "location": "Showroom",
-      "productId": "model-y",
-      "productName": "Model Y"
+      "productId": "toyota-camry",
+      "productName": "Toyota Camry"
     }
   },
   "ShowroomReferenceUploadedSchema": {
@@ -277,7 +277,7 @@
         ]
       },
       "selection": {
-        "productId": "model-y",
+        "productId": "toyota-camry",
         "templateId": "DREAM_ROUTE",
         "heroMode": "LIKENESS",
         "productionMode": "reviewed-storyboard",
@@ -305,7 +305,7 @@
         "expectedRevision": 3,
         "inputRevision": 2,
         "confirmationFingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-        "readback": "Use the approved photo and coastal-drive interest to make the selected Model Y studio movie?",
+        "readback": "Use the approved photo and coastal-drive interest to make the selected Toyota Camry studio movie?",
         "expiresAt": 1800000060000,
         "kind": "studio",
         "payload": {
@@ -319,7 +319,7 @@
             "displayName": "Alex"
           },
           "selection": {
-            "productId": "model-y",
+            "productId": "toyota-camry",
             "templateId": "DREAM_ROUTE",
             "heroMode": "LIKENESS",
             "productionMode": "reviewed-storyboard",
@@ -384,8 +384,8 @@
     "mode": "studio",
     "products": [
       {
-        "id": "model-y",
-        "name": "Model Y",
+        "id": "toyota-camry",
+        "name": "Toyota Camry",
         "ready": false
       }
     ],

@@ -7,6 +7,7 @@
   "scripts": {
     "dev": "node --env-file-if-exists=.env node_modules/next/dist/bin/next dev -H 127.0.0.1 -p 3200",
     "worker": "node --env-file-if-exists=.env --import tsx scripts/worker.ts",
+    "veo:check": "node --env-file-if-exists=.env --import tsx scripts/check-veo.ts",
     "media-service": "node --env-file-if-exists=.env --import tsx scripts/media-service.ts",
     "cli": "node --env-file-if-exists=.env --import tsx scripts/cli.ts",
     "build": "next build",

@@ -1,0 +1,21 @@
+{
+  "displayName": "Lexus IS",
+  "make": "Lexus",
+  "model": "IS",
+  "exterior": {
+    "filename": "exterior.jpg",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:2021_Lexus_IS_300_AWD,_front_3.26.21.jpg",
+    "directUrl": "https://upload.wikimedia.org/wikipedia/commons/d/de/2021_Lexus_IS_300_AWD%2C_front_3.26.21.jpg",
+    "license": "CC BY-SA 4.0",
+    "author": "Kevauto",
+    "transformation": "Wikimedia Commons thumbnail service scaled the source image to 1920x1178 pixels after the direct URL was rate-limited; no local pixel transformation was applied."
+  },
+  "interior": {
+    "filename": "interior.jpg",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:Lexus_IS350_Ver.L_(GSE31)_interior.JPG",
+    "directUrl": "https://upload.wikimedia.org/wikipedia/commons/b/b1/Lexus_IS350_Ver.L_%28GSE31%29_interior.JPG",
+    "license": "CC0",
+    "author": "Tokumeigakarinoaoshima",
+    "transformation": "Wikimedia Commons thumbnail service scaled the source image to 1920x1440 pixels after the direct URL was rate-limited; no local pixel transformation was applied."
+  }
+}
