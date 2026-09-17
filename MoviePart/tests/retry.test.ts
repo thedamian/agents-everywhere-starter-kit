@@ -163,6 +163,47 @@ test("retry endpoint preserves the plan and approved assets, and concurrent dupl
   assert.equal((await f.handlers.retryJob(foreign, f.job.id)).status, 404);
 });
 
+test("terminal Veo rejection disables legacy retry and designer resume without touching approved work", async t => {
+  const f = await fixture(t, 6);
+  const operation = { provider: "Google Veo", id: "models/veo-3.1-generate-preview/operations/ended" };
+  const codes = ["VEO_GENERATION_FAILED", "VEO_CONTENT_FILTERED", "VEO_OPERATION_QUOTA", "VEO_OPERATION_INVALID", "VEO_OPERATION_ACCESS", "VEO_OPERATION_UNAVAILABLE"];
+  for (const code of codes) {
+    const saved = await f.store.update(f.job.id, job => {
+      job.request.enable_hero_video = true;
+      job.request.video_provider = "google-veo";
+      job.plan!.videoProvider = "google-veo";
+      job.heroAttempted = true;
+      job.operations = [operation];
+      job.error = { stage: "GENERATING_HERO", code, message: "Previous generic failure text." };
+    });
+    const view = jobView(saved);
+    assert.equal(view.retry?.eligible, false);
+    assert.equal(view.designerReviewAllowed, false);
+    assert.match(view.error!.message, /operation has ended.*retrying it cannot restart generation/);
+    const reply = await f.handlers.retryJob(f.request(action()), f.job.id);
+    assert.equal(reply.status, 409);
+    assert.equal((await reply.json()).code, "VEO_OPERATION_TERMINAL");
+    await assert.rejects(f.store.decideFrame(f.job.id, ownerId, saved.frames[0].assetId, {
+      idempotency_key: randomUUID(), expected_revision: 0, expected_attempt: 0,
+      action: "keep", note: "Continue with approved frames.", resume: true,
+    }, async () => assert.fail("Do not review a frame for a terminal video"), async () => assert.fail("Do not requeue")),
+    (error: unknown) => error instanceof MovieError && error.code === "VEO_OPERATION_TERMINAL");
+    const after = await f.store.get(f.job.id);
+    assert.equal(after.retries, undefined);
+    assert.deepEqual(after.frames, saved.frames);
+    assert.deepEqual(after.plan, saved.plan);
+    assert.deepEqual(after.operations, [operation]);
+    assert.equal(after.status, "FAILED");
+    for (const frame of after.frames) assert.ok((await f.media.readAsset(frame.assetId)).byteLength);
+  }
+  for (const code of ["VEO_PENDING", "VEO_TIMEOUT", "VEO_WORKFLOW_FAILED", "VEO_CONTINUITY_REJECTED", "OPENAI_CREDITS_EXHAUSTED"]) {
+    const pending = await f.store.update(f.job.id, job => {
+      job.error = { code, stage: "GENERATING_HERO", message: "Recoverable existing operation." };
+    });
+    assert.equal(retrySummary(pending).eligible, true, `${code} must still allow recovering an existing operation or saved clip`);
+  }
+});
+
 test("real worker resumes shots 3-6 with saved corrections and produces a full MP4 without replanning", async t => {
   const f = await fixture(t);
   const edits: { shotId: string; corrections: string[] }[] = [];
@@ -404,4 +445,185 @@ test("explicit movie-first conversion preserves input identity and deduplicates 
   assert.equal((await f.retry(request)).attempt, 1);
   await assert.rejects(f.retry({ idempotency_key: request.idempotency_key, expected_attempt: 0 }), /different attempt/);
   assert.equal((await f.store.get(f.job.id)).retries?.length, 1);
+});
+
+test("continuity recovery replaces only the rejected Veo segment twice, then permits explicit image motion", async t => {
+  const f = await fixture(t, 6);
+  const clip = async (index: number) => ({
+    assetId: (await f.media.saveAsset({
+      ownerId, jobId: f.job.id, kind: "video", mime: "video/mp4", bytes: new Uint8Array([index + 1]),
+    })).id, shotId: f.plan.heroShotId,
+    provider: "Google Veo" as const, model: "veo-3.1-generate-preview", operationId: `operation-${index}`,
+  });
+  const first = await clip(0);
+  const second = await clip(1);
+  await f.store.update(f.job.id, job => {
+    job.request.enable_hero_video = true;
+    job.request.video_provider = "google-veo";
+    job.request.render_layout = "video-bookends";
+    job.request.movie_duration_seconds = 28;
+    job.plan!.videoProvider = "google-veo";
+    job.hero = first;
+    job.heroAttempted = true;
+    job.operations = [0, 1, 2].map(index => ({ provider: "Google Veo", id: `operation-${index}` }));
+    job.videoSegments = [
+      { index: 0, submitted: true, operationId: "operation-0", clip: first },
+      { index: 1, submitted: true, operationId: "operation-1", clip: second, startFrameAssetId: randomUUID() },
+      { index: 2, submitted: true, operationId: "operation-2", startFrameAssetId: randomUUID() },
+    ];
+    job.error = { code: "VEO_CONTINUITY_REJECTED", message: "Retained rejection.", stage: "GENERATING_HERO" };
+  });
+  const verifyNothing = async () => {};
+  const ordinary = action();
+  await assert.rejects(
+    f.store.retryOwned(f.job.id, ownerId, ordinary, verifyNothing),
+    (error: unknown) => error instanceof MovieError && error.code === "VIDEO_RECOVERY_REQUIRED",
+  );
+
+  const replaceOne: RetryRequest = { ...action(), video_recovery_action: "replace-rejected-clip" };
+  const accepted = await f.store.retryOwned(f.job.id, ownerId, replaceOne, verifyNothing);
+  assert.equal((await f.store.retryOwned(f.job.id, ownerId, replaceOne, verifyNothing)).attempt, accepted.attempt);
+  let saved = await f.store.get(f.job.id);
+  assert.deepEqual(saved.videoSegments?.slice(0, 2), [
+    { index: 0, submitted: true, operationId: "operation-0", clip: first },
+    { index: 1, submitted: true, operationId: "operation-1", clip: second, startFrameAssetId: saved.videoSegments![1].startFrameAssetId },
+  ]);
+  assert.deepEqual(saved.videoSegments?.[2], {
+    index: 2, submitted: false, startFrameAssetId: saved.videoSegments![2].startFrameAssetId,
+  });
+  assert.equal(saved.videoRecoveries?.[0].supersededOperationId, "operation-2");
+  assert.equal(saved.operations.some(operation => operation.id === "operation-2"), true, "superseded operation stays in provenance");
+
+  saved = await f.store.update(f.job.id, job => {
+    job.status = "FAILED";
+    job.error = { code: "VEO_CONTINUITY_REJECTED", message: "First replacement rejected.", stage: "GENERATING_HERO" };
+    job.operations.push({ provider: "Google Veo", id: "replacement-1" });
+    job.videoSegments![2] = { ...job.videoSegments![2], submitted: true, operationId: "replacement-1" };
+  });
+  assert.equal(retrySummary(saved).videoRecovery?.replacementAttempts, 1);
+  const replaceTwo: RetryRequest = { ...action(1), video_recovery_action: "replace-rejected-clip" };
+  await f.store.retryOwned(f.job.id, ownerId, replaceTwo, verifyNothing);
+
+  saved = await f.store.update(f.job.id, job => {
+    job.status = "FAILED";
+    job.error = { code: "VEO_CONTINUITY_REJECTED", message: "Second replacement rejected.", stage: "GENERATING_HERO" };
+    job.operations.push({ provider: "Google Veo", id: "replacement-2" });
+    job.videoSegments![2] = { ...job.videoSegments![2], submitted: true, operationId: "replacement-2" };
+  });
+  assert.deepEqual(retrySummary(saved).videoRecovery, {
+    replacementAttempts: 2, maxReplacementAttempts: 2, rejectedSegment: 2,
+    veoSubmissionUncertain: false, replacementAvailable: false, imageMotionAvailable: true,
+  });
+  await assert.rejects(
+    f.store.retryOwned(f.job.id, ownerId, { ...action(2), video_recovery_action: "replace-rejected-clip" }, verifyNothing),
+    (error: unknown) => error instanceof MovieError && error.code === "VIDEO_REPLACEMENT_LIMIT",
+  );
+  const fallback = await f.store.retryOwned(f.job.id, ownerId, {
+    ...action(2), video_recovery_action: "use-image-motion",
+  }, verifyNothing);
+  assert.equal(fallback.job.productionMode, "movie-first");
+  assert.equal(fallback.job.videoRecoveries?.at(-1)?.action, "use-image-motion");
+  assert.equal(fallback.job.request.video_provider, "google-veo", "accepted input remains immutable");
+  assert.match(fallback.job.events.at(-1)!.message, /Operator-approved image-motion fallback/);
+
+  let rendered = false;
+  const context: GenerationContext = {
+    jobId: f.job.id, ownerId, media: f.media, signal: new AbortController().signal,
+    report: async () => {}, warn: async () => {}, recordOperation: async () => {},
+    saveFrame: async () => {}, saveSceneFrame: async () => {},
+  };
+  const result = await executeMovie(fallback.job, context, async patch => { Object.assign(fallback.job, patch); }, f.config, {
+    references: { extract: async () => assert.fail("Fallback must reuse the saved character") },
+    director: { plan: async () => assert.fail("Fallback must reuse the saved plan") },
+    storyboard: {
+      generate: async input => {
+        assert.equal(input.productionMode, "movie-first");
+        assert.equal(input.plan.videoProvider, undefined);
+        assert.deepEqual(input.existingFrames, f.frames);
+        return f.frames;
+      },
+    },
+    video: { generate: async () => assert.fail("Fallback must not submit another video") },
+    renderer: {
+      ready: async () => ({ available: true, message: "Offline renderer" }),
+      render: async input => {
+        rendered = true;
+        assert.equal(input.productionMode, "movie-first");
+        assert.equal(input.plan.videoProvider, undefined);
+        assert.equal(input.hero, null);
+        assert.equal(input.renderLayout, undefined);
+        const output = await f.media.saveAsset({
+          ownerId, jobId: f.job.id, kind: "video", mime: "video/mp4", bytes: new Uint8Array([9]),
+        });
+        return { assetId: output.id, mode: "image-motion", durationSeconds: 23, hasAudio: false };
+      },
+    },
+    extract: async () => f.frames,
+  });
+  assert.equal(rendered, true);
+  assert.equal(result.mode, "image-motion");
+  const publicView = jobView({ ...fallback.job, status: "COMPLETED", result });
+  assert.equal(publicView.result?.mode, "image-motion");
+  assert.equal(publicView.renderLayout, "storyboard");
+});
+
+test("uncertain Veo submission requires explicit bounded replacement authorization", async t => {
+  const f = await fixture(t, 6);
+  const failed = await f.store.update(f.job.id, job => {
+    job.request.enable_hero_video = true;
+    job.request.video_provider = "google-veo";
+    job.request.render_layout = "video-bookends";
+    job.request.movie_duration_seconds = 13;
+    job.plan!.videoProvider = "google-veo";
+    job.heroAttempted = true;
+    job.hero = null;
+    job.operations = job.operations.filter(operation => operation.provider !== "Google Veo");
+    job.videoSegments = undefined;
+    job.error = {
+      code: "VEO_WORKFLOW_FAILED", stage: "GENERATING_HERO",
+      message: "The Google Veo workflow could not finish submission.",
+    };
+  });
+  assert.deepEqual(retrySummary(failed).videoRecovery, {
+    replacementAttempts: 0, maxReplacementAttempts: 2,
+    veoSubmissionUncertain: true, replacementAvailable: true, imageMotionAvailable: false,
+  });
+  assert.equal(retrySummary(failed).eligible, true);
+  await assert.rejects(
+    f.store.retryOwned(f.job.id, ownerId, action(), async () => {}),
+    (error: unknown) => error instanceof MovieError && error.code === "VIDEO_SUBMISSION_UNCERTAIN",
+  );
+  const first = await f.store.retryOwned(f.job.id, ownerId, {
+    ...action(), video_recovery_action: "replace-rejected-clip",
+  }, async () => {});
+  assert.equal(first.job.heroAttempted, false);
+  assert.equal(first.job.videoRecoveries?.length, 1);
+
+  const failedAgain = await f.store.update(f.job.id, job => {
+    job.status = "FAILED";
+    job.heroAttempted = true;
+    job.error = {
+      code: "VEO_WORKFLOW_FAILED", stage: "GENERATING_HERO",
+      message: "The replacement returned no operation ID.",
+    };
+  });
+  assert.equal(retrySummary(failedAgain).videoRecovery?.replacementAvailable, true);
+  const second = await f.store.retryOwned(f.job.id, ownerId, {
+    ...action(1), video_recovery_action: "replace-rejected-clip",
+  }, async () => {});
+  assert.equal(second.job.videoRecoveries?.length, 2);
+
+  const failedTwice = await f.store.update(f.job.id, job => {
+    job.status = "FAILED";
+    job.heroAttempted = true;
+    job.error = {
+      code: "VEO_WORKFLOW_FAILED", stage: "GENERATING_HERO",
+      message: "The second replacement returned no operation ID.",
+    };
+  });
+  assert.equal(retrySummary(failedTwice).videoRecovery?.replacementAvailable, false);
+  await assert.rejects(
+    f.store.retryOwned(f.job.id, ownerId, { ...action(2), video_recovery_action: "replace-rejected-clip" }, async () => {}),
+    (error: unknown) => error instanceof MovieError && error.code === "VIDEO_REPLACEMENT_LIMIT",
+  );
 });

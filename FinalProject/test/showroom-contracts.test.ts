@@ -15,7 +15,7 @@ import { BRIDGE_LIMITS, BridgeCommandSchema, BridgeLeaseSchema } from '../src/co
 const id = '11111111-1111-4111-8111-111111111111';
 const now = 1_800_000_000_000;
 const selection = {
-  productId: 'model-y', templateId: 'DREAM_ROUTE', heroMode: 'LIKENESS',
+  productId: 'toyota-camry', templateId: 'DREAM_ROUTE', heroMode: 'LIKENESS',
   productionMode: 'reviewed-storyboard', videoProvider: 'google-veo', enableHeroVideo: true,
   storyFormat: 'four-shot', renderLayout: 'storyboard', movieDurationSeconds: null,
 };
@@ -56,7 +56,7 @@ test('calendar drafts bind all invitees and exactly sixty minutes including offs
   const draft = {
     startTime: '2026-11-01T01:30:00-04:00', endTime: '2026-11-01T01:30:00-05:00',
     timeZone: 'America/New_York', attendees: ['visitor@example.com', 'staff@example.com'],
-    subject: 'Model Y test drive', location: 'Showroom', productId: 'model-y', productName: 'Model Y',
+    subject: 'Toyota Camry test drive', location: 'Showroom', productId: 'toyota-camry', productName: 'Toyota Camry',
   };
   assert.equal(AppointmentDraftSchema.safeParse(draft).success, true);
   assert.equal(AppointmentDraftSchema.safeParse({ ...draft, endTime: '2026-11-01T02:30:00-05:00' }).success, false);
@@ -87,7 +87,7 @@ test('accepted studio snapshots are deeply immutable and independent of mutable 
   const original = structuredClone(examples.AcceptedStudioSnapshotSchema);
   const accepted = showroom.parseAcceptedStudioSnapshot(original, {
     sessionId: id, inputRevision: 2, consentId: id,
-    ownedAssetIds: ['22222222-2222-4222-8222-222222222222'], availableProductIds: ['model-y'],
+    ownedAssetIds: ['22222222-2222-4222-8222-222222222222'], availableProductIds: ['toyota-camry'],
   });
   function assertFrozen(value: unknown): void {
     if (value === null || typeof value !== 'object') return;
@@ -103,7 +103,7 @@ test('accepted studio snapshots are deeply immutable and independent of mutable 
 test('studio acceptance rejects foreign ownership, stale consent/input and invented catalog products', () => {
   const fixture = examples.AcceptedStudioSnapshotSchema;
   const authority = { sessionId: id, inputRevision: 2, consentId: id,
-    ownedAssetIds: ['22222222-2222-4222-8222-222222222222'], availableProductIds: ['model-y'] };
+    ownedAssetIds: ['22222222-2222-4222-8222-222222222222'], availableProductIds: ['toyota-camry'] };
   for (const change of [
     { ownedAssetIds: [] }, { availableProductIds: [] }, { sessionId: '22222222-2222-4222-8222-222222222222' },
     { inputRevision: 3 }, { consentId: '22222222-2222-4222-8222-222222222222' },

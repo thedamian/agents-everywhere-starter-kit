@@ -10,11 +10,11 @@ and actual video runtime have not been verified. No placeholder video was made.
 - Eight shots, in order, with durations 4, 3, 3, 3, 7, 4, 3, 3 seconds: 30 seconds total.
 - Vertical 9:16, with 1080x1920 at 30 fps as the assembly target.
 - Astra-generated customer likeness anchored to the actual local photos.
-- Red Multi-Coat Tesla Model 3 Performance with corrected pre-Highland geometry.
-- Photos override the JSON's cream-seat claim: keep the photographed black cabin.
-- One continuous original instrumental cue, no lyrics or narration, near-silent car,
-  and no engine roar. Keep music continuous across the shot boundaries.
-- Shot 8: exact tagline "Your leap starts now." and clean "Tesla" brand text.
+- Toyota Tundra with body generation, trim, paint, wheels and cabin anchored to the licensed catalog photographs.
+- Photographs override generic metadata: keep the photographed cabin and exterior details.
+- One continuous original instrumental cue, no lyrics or narration, and restrained
+  natural vehicle sound. Keep music continuous across the shot boundaries.
+- Shot 8: exact tagline "Your leap starts now." and clean "Toyota" brand text.
   No dealership logo or dealership name was supplied.
 
 ## Resume Generation

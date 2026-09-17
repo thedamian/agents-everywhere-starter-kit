@@ -12,6 +12,8 @@ import { createMockBriefProvider, createMockProfileProvider, isMockProfileProvid
 import { ProviderFailure } from '../providers/http-client.js';
 import { isPrerecordedDemoProvider } from '../providers/demo-media.js';
 import { ApiError } from './errors.js';
+import { ShowroomService, type ShowroomCalendar, type ShowroomMotion } from './showroom.js';
+import type { StudioProvider } from '../providers/studio.js';
 
 export { ApiError } from './errors.js';
 
@@ -71,6 +73,7 @@ interface Session {
   assets: Map<string, Asset>;
   operation?: AbortController;
   timer?: ReturnType<typeof setTimeout>;
+  showroomActive?: boolean;
 }
 
 export interface OrchestratorOptions {
@@ -84,10 +87,15 @@ export interface OrchestratorOptions {
   maxQueuedJobs?: number;
   fallbackMediaProvider?: MediaProvider;
   allowFallbacks?: boolean;
+  studioProvider?: StudioProvider;
+  showroomMode?: 'studio' | 'fixture';
+  calendar?: ShowroomCalendar;
+  motion?: ShowroomMotion;
 }
 
 export class Orchestrator {
   readonly serverInstanceId = randomUUID();
+  readonly showroom?: ShowroomService;
   private readonly sessions = new Map<string, Session>();
   private readonly expired = new Map<string, true>();
   private readonly queue: { session: Session; record: JobRecord }[] = [];
@@ -100,6 +108,12 @@ export class Orchestrator {
   private readonly maxQueued: number;
   private readonly briefProvider: BriefProvider;
   private readonly profileProvider: ProfileProvider;
+  private readonly endListeners = new Set<(sessionId: string) => void>();
+
+  onSessionEnded(listener: (sessionId: string) => void): () => void {
+    this.endListeners.add(listener);
+    return () => { this.endListeners.delete(listener); };
+  }
 
   constructor(private readonly options: OrchestratorOptions) {
     this.now = options.now ?? Date.now;
@@ -117,6 +131,26 @@ export class Orchestrator {
     }
     this.briefProvider = options.briefProvider ?? createMockBriefProvider();
     this.profileProvider = options.profileProvider ?? createMockProfileProvider();
+    if (options.studioProvider) this.showroom = new ShowroomService({
+      provider: options.studioProvider, mode: options.showroomMode, calendar: options.calendar,
+      motion: options.motion, now: this.now, jobTimeoutMs: this.timeout,
+      authority: {
+        session: id => {
+          const session = this.get(id);
+          session.showroomActive = true;
+          return { revision: session.revision, expiresAt: session.expiresAt, state: session.state, serverInstanceId: this.serverInstanceId };
+        },
+        transition: (id, state, event) => {
+          const session = this.get(id); session.state = state; this.emit(session, event, {});
+        },
+        saveAsset: (id, asset) => {
+          const session = this.get(id); this.mutable(session);
+          const assetId = randomUUID(); session.assets.set(assetId, copy(asset)); return assetId;
+        },
+        deleteAsset: (id, assetId) => { this.get(id).assets.delete(assetId); },
+        end: id => { this.cancel(this.get(id), 'cancelled'); },
+      },
+    });
   }
 
   createSession(): { sessionId: string; sessionToken: string; serverInstanceId: string } {
@@ -167,6 +201,9 @@ export class Orchestrator {
   event(sessionId: string, input: unknown): SessionSnapshot {
     const session = this.get(sessionId);
     const event = parse(SessionEventSchema, input);
+    if (session.showroomActive && event.type !== 'session_cancelled') {
+      throw new ApiError(409, 'SHOWROOM_ACTION_REQUIRED', 'Use the authoritative showroom actions for this session.');
+    }
     const fingerprint = digest(canonical(input));
     const prior = session.receipts.get(event.eventId);
     if (prior) {
@@ -233,6 +270,7 @@ export class Orchestrator {
 
   async command(sessionId: string, name: string, input: unknown): Promise<CustomerProfile | CustomerContext | AdBrief | MediaJob> {
     const session = this.get(sessionId);
+    if (session.showroomActive) throw new ApiError(409, 'SHOWROOM_ACTION_REQUIRED', 'Use the authoritative showroom actions for this session.');
     if (name === 'get_media_status') {
       const { jobId } = parse(GetMediaStatusInputSchema, input);
       return copy(this.job(session, jobId).job);
@@ -278,6 +316,7 @@ export class Orchestrator {
 
   uploadImage(sessionId: string, bytes: Uint8Array, mimeType: 'image/png' | 'image/jpeg'): { assetId: string } {
     const session = this.get(sessionId);
+    if (session.showroomActive) throw new ApiError(409, 'SHOWROOM_ACTION_REQUIRED', 'Use the bounded showroom reference uploader.');
     this.mutable(session);
     this.personalization(session);
     if (!session.consent?.capture) throw new ApiError(403, 'CAPTURE_CONSENT_REQUIRED', 'Capture consent is required.');
@@ -357,6 +396,7 @@ export class Orchestrator {
 
   private remove(session: Session, status: 'cancelled' | 'expired'): void {
     this.cancel(session, status);
+    this.showroom?.forget(session.id);
     clearTimeout(session.timer);
     this.sessions.delete(session.id);
     this.expired.set(session.id, true);
@@ -366,6 +406,8 @@ export class Orchestrator {
   }
 
   private cancel(session: Session, status: 'cancelled' | 'expired'): void {
+    if (session.state !== 'cancelled') for (const listener of this.endListeners) listener(session.id);
+    this.showroom?.cancel(session.id);
     session.state = 'cancelled';
     const reason = new ApiError(410, status === 'expired' ? 'SESSION_EXPIRED' : 'SESSION_CANCELLED', 'The session has ended.');
     session.operation?.abort(reason);

@@ -1,0 +1,21 @@
+{
+  "displayName": "Toyota Sequoia",
+  "make": "Toyota",
+  "model": "Sequoia",
+  "exterior": {
+    "filename": "exterior.jpg",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:24_Toyota_Sequoia_TRD_Pro.jpg",
+    "directUrl": "https://upload.wikimedia.org/wikipedia/commons/a/ac/24_Toyota_Sequoia_TRD_Pro.jpg",
+    "license": "CC0 1.0",
+    "author": "HJUdall",
+    "transformation": "Wikimedia Commons thumbnail service scaled the source image to 1920x1440 pixels after the direct URL was rate-limited; no local pixel transformation was applied."
+  },
+  "interior": {
+    "filename": "interior.jpg",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:2024_Toyota_Sequoia_interior.jpg",
+    "directUrl": "https://upload.wikimedia.org/wikipedia/commons/6/61/2024_Toyota_Sequoia_interior.jpg",
+    "license": "CC BY 4.0",
+    "author": "Deathpallie325",
+    "transformation": "Wikimedia Commons thumbnail service scaled the source image to 1920x1080 pixels after the direct URL was rate-limited; no local pixel transformation was applied."
+  }
+}

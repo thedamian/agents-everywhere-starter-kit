@@ -1,0 +1,21 @@
+{
+  "displayName": "Toyota RAV4",
+  "make": "Toyota",
+  "model": "RAV4",
+  "exterior": {
+    "filename": "exterior.jpg",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:2024_Toyota_RAV4_Cruiser_Hybrid_front.jpg",
+    "directUrl": "https://upload.wikimedia.org/wikipedia/commons/1/1f/2024_Toyota_RAV4_Cruiser_Hybrid_front.jpg",
+    "license": "CC BY-SA 4.0",
+    "author": "LuvsMG481",
+    "transformation": "Wikimedia Commons thumbnail service scaled the source image to 1920x959 pixels after the direct URL was rate-limited; no local pixel transformation was applied."
+  },
+  "interior": {
+    "filename": "interior.jpg",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:2019_Toyota_RAV4_Interior.jpg",
+    "directUrl": "https://upload.wikimedia.org/wikipedia/commons/c/c5/2019_Toyota_RAV4_Interior.jpg",
+    "license": "CC BY-SA 4.0",
+    "author": "Vauxford",
+    "transformation": "Wikimedia Commons thumbnail service scaled the source image to 1920x1080 pixels after the direct URL was rate-limited; no local pixel transformation was applied."
+  }
+}

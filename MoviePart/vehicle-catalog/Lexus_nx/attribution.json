@@ -1,0 +1,21 @@
+{
+  "displayName": "Lexus NX",
+  "make": "Lexus",
+  "model": "NX",
+  "exterior": {
+    "filename": "exterior.jpg",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:LEXUS_NX350h_China_(21).jpg",
+    "directUrl": "https://upload.wikimedia.org/wikipedia/commons/4/4d/LEXUS_NX350h_China_%2821%29.jpg",
+    "license": "CC BY-SA 4.0",
+    "author": "Dinkun Chen",
+    "transformation": "Wikimedia Commons thumbnail service scaled the source image to 1920x1075 pixels after the direct URL was rate-limited; no local pixel transformation was applied."
+  },
+  "interior": {
+    "filename": "interior.jpg",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:Lexus_NX_350h_F_SPORT_2WD_(6AA-AAZH20-AWXLB(F))_interior.jpg",
+    "directUrl": "https://upload.wikimedia.org/wikipedia/commons/1/1c/Lexus_NX_350h_F_SPORT_2WD_%286AA-AAZH20-AWXLB%28F%29%29_interior.jpg",
+    "license": "CC BY-SA 4.0",
+    "author": "Tokumeigakarinoaoshima",
+    "transformation": "Wikimedia Commons thumbnail service scaled the source image to 1920x1440 pixels after the direct URL was rate-limited; no local pixel transformation was applied."
+  }
+}

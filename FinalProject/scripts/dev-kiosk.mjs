@@ -5,7 +5,8 @@ import { createServer } from "node:net";
 import { resolve } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
-import { integrationEnvironments, launchOptions, optionalEnvironment } from "./kiosk-config.mjs";
+import { integrationEnvironments, launchOptions, optionalEnvironment, studioReady, apiReady } from "./kiosk-config.mjs";
+import { persistentStudioCredential } from "./studio-credential.mjs";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
 const movieRoot = resolve(root, "..", "MoviePart");
@@ -91,19 +92,28 @@ async function waitFor(url, predicate, headers = {}, timeoutMs = 60_000) {
 
 try {
   const options = launchOptions(process.argv.slice(2));
+  if (options.windowsBridge && process.platform !== "win32") {
+    throw new Error("--windows-bridge requires the approved Windows Chrome operator host.");
+  }
   for (const file of [resolve(root, "dist", "server.js"), resolve(movieRoot, "node_modules", "next", "dist", "bin", "next")]) {
     try { await access(file); } catch {
       throw new Error("Build FinalProject and install MoviePart dependencies first: npm --prefix FinalProject run build; npm --prefix MoviePart ci.");
     }
   }
   const finalEnv = await optionalEnvironment(resolve(root, ".env"));
-  const movieEnv = options.liveMedia ? await optionalEnvironment(resolve(movieRoot, ".env")) : {};
+  const movieEnv = options.liveMedia || options.liveStudio ? await optionalEnvironment(resolve(movieRoot, ".env")) : {};
+  const robotEnv = options.liveVoice ? await optionalEnvironment(resolve(root, "..", "RobotPart", ".env")) : {};
   const deviceToken = randomBytes(32).toString("base64url");
   const mediaToken = randomBytes(32).toString("base64url");
-  const env = integrationEnvironments({ options, deviceToken, mediaToken, finalEnv, movieEnv });
+  const studioToken = options.liveStudio ? await persistentStudioCredential(resolve(root, ".runtime"), [
+    finalEnv.MOVIE_API_TOKEN, movieEnv.MOVIE_API_TOKEN,
+  ]) : "";
+  const operatorToken = randomBytes(32).toString("base64url");
+  const env = integrationEnvironments({ options, deviceToken, mediaToken, studioToken, operatorToken, finalEnv, movieEnv, robotEnv });
   for (const port of [options.apiPort, options.uiPort, ...(options.liveMedia ? [options.mediaPort] : [])]) await freePort(port);
   await mkdir(resolve(root, ".runtime"), { recursive: true, mode: 0o700 });
   await writeFile(resolve(root, ".runtime", "device-token"), `${deviceToken}\n`, { mode: 0o600 });
+  await writeFile(resolve(root, ".runtime", "showroom-operator-token"), `${operatorToken}\n`, { mode: 0o600 });
   if (options.liveMedia) await writeFile(resolve(root, ".runtime", "media-service-token"), `${mediaToken}\n`, { mode: 0o600 });
   process.once("SIGINT", () => void stop());
   process.once("SIGTERM", () => void stop());
@@ -118,21 +128,40 @@ try {
       return value.schemaVersion === 1 && value.cancelByKey === true && value.deleteAssets === true;
     }, { Authorization: `Bearer ${mediaToken}` });
   }
+  if (options.liveStudio) {
+    start("MoviePart studio web", ["node_modules/next/dist/bin/next", "dev", "-H", "127.0.0.1", "-p", String(options.uiPort)], movieRoot, env.ui);
+    start("MoviePart studio worker", ["--import", "tsx", "scripts/worker.ts"], movieRoot, env.worker);
+    await waitFor(`${env.uiOrigin}/api/movie-config`, async (response) => {
+      if (response.status === 401 || response.status === 403) throw new Error("The studio rejected its private machine token.");
+      if (!response.ok) return false;
+      return studioReady(await response.json());
+    }, { Authorization: `Bearer ${studioToken}` }, options.startupTimeoutMs);
+  }
   start("MagicPitch API", ["dist/server.js"], root, env.api);
   await waitFor(`${env.apiOrigin}/readyz`, async (response) => {
     if (!response.ok) return false;
-    const value = await response.json();
-    return value.providers?.media === (options.liveMedia ? "http" : "mock");
+    return apiReady(await response.json(), options);
   });
-  start("MoviePart kiosk", ["node_modules/next/dist/bin/next", "dev", "-H", "127.0.0.1", "-p", String(options.uiPort)], movieRoot, env.ui);
-  await waitFor(`${env.uiOrigin}/kiosk`, async (response) => response.ok, {}, 120_000);
+  if (!options.liveStudio) {
+    start("MoviePart kiosk", ["node_modules/next/dist/bin/next", "dev", "-H", "127.0.0.1", "-p", String(options.uiPort)], movieRoot, env.ui);
+  }
+  await waitFor(`${env.uiOrigin}/kiosk`, async (response) => response.ok, {}, options.startupTimeoutMs);
   console.log(JSON.stringify({
     event: "kiosk_integration_ready",
-    kiosk: `${env.uiOrigin}/kiosk`, api: env.apiOrigin,
-    media: options.liveMedia ? env.mediaOrigin : "synthetic mock fixture",
+    kiosk: `${env.publicOrigin}/kiosk`, localKiosk: `${env.uiOrigin}/kiosk`, api: env.apiOrigin,
+    publicHttpsVerified: false,
+    media: options.liveStudio ? "full creator studio worker" : options.liveMedia ? env.mediaOrigin : "synthetic mock fixture",
     pairingFile: resolve(root, ".runtime", "device-token"),
-    mode: options.liveMedia ? "live-media-opt-in" : "offline-kiosk",
+    operatorBootstrapFile: resolve(root, ".runtime", "showroom-operator-token"),
+    operatorBridge: options.windowsBridge ? `${env.uiOrigin}/robot-bridge?apiPort=${options.apiPort}` : "disabled",
+    capabilities: {
+      studio: options.liveStudio, voice: options.liveVoice, calendar: options.googleCalendar, windowsBridge: options.windowsBridge,
+    },
+    mode: options.liveStudio ? "live-studio-opt-in" : options.liveMedia ? "live-media-opt-in" : "mock-film",
   }));
+  if (env.publicOrigin !== env.uiOrigin) {
+    console.log("Configure and verify the trusted HTTPS proxy separately when using a remote customer display. This launcher does not start a tunnel or verify tablet certificate trust.");
+  }
   await stopped;
 } catch (error) {
   failed = true;

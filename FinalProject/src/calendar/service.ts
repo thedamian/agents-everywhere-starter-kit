@@ -158,13 +158,22 @@ export class CalendarSchedulingService {
       ...record, state: "created", invitationsRequested: true,
       htmlLink: safeEventLink(event.htmlLink), updatedAt: this.clock().toISOString(),
     };
-    await this.dependencies.receipts.save(created);
+    await this.saveVerifiedOutcome(created);
     return this.receipt(created);
   }
   private async recordCancelled(record: CalendarReceiptRecord): Promise<BookingReceipt> {
     const cancelled: CalendarReceiptRecord = { ...record, state: "cancelled", updatedAt: this.clock().toISOString() };
-    await this.dependencies.receipts.save(cancelled);
+    await this.saveVerifiedOutcome(cancelled);
     return this.receipt(cancelled);
+  }
+  private async saveVerifiedOutcome(record: CalendarReceiptRecord): Promise<void> {
+    try { await this.dependencies.receipts.save(record); } catch {
+      throw new CalendarError(
+        "CALENDAR_STORAGE_FAILED",
+        "Google Calendar has an observed outcome, but its receipt could not be saved. Retry only this same confirmation; do not create a replacement booking.",
+        503, true, true,
+      );
+    }
   }
   private receipt(record: CalendarReceiptRecord): BookingReceipt {
     if (record.state !== "created" && record.state !== "cancelled") throw this.uncertain();

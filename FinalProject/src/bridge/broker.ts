@@ -237,9 +237,6 @@ export class BridgeBroker {
     bridge.nextPulseAt = now + intent.pulseMs + BRIDGE_LIMITS.cooldownMs;
     bridge.heartbeat = { ...bridge.heartbeat, stopped: false };
     this.queue(bridge, command);
-    if (!bridge.channel || bridge.lease !== lease) {
-      throw new BridgeError(503, 'BRIDGE_DELIVERY_FAILED', 'Motion delivery is unconfirmed. The bridge is disarmed; do not replay the permit.');
-    }
     return command;
   }
 
@@ -277,9 +274,6 @@ export class BridgeBroker {
       || command.leaseGeneration !== acknowledgement.leaseGeneration) {
       throw new BridgeError(409, 'ACK_MISMATCH', 'Acknowledgement does not identify an issued command.');
     }
-    if (acknowledgement.at < command.issuedAt || acknowledgement.at > this.now() + BRIDGE_LIMITS.watchdogMs) {
-      throw new BridgeError(409, 'ACK_TIME', 'Acknowledgement time does not match the issued command.');
-    }
     const prior = bridge.acknowledgements.get(command.commandId);
     if (prior && (prior.status !== 'write_completed' || acknowledgement.status === 'write_completed')) {
       throw new BridgeError(409, 'ACK_REPLAY', 'This command already has a terminal acknowledgement.');
@@ -287,7 +281,6 @@ export class BridgeBroker {
     if (command.type === 'stop' && acknowledgement.status === 'write_completed') {
       throw new BridgeError(400, 'ACK_STATUS', 'A Stop requires a stop-written or rejected acknowledgement.');
     }
-    bridge.acknowledgements.delete(command.commandId);
     bridge.acknowledgements.set(command.commandId, acknowledgement);
     while (bridge.acknowledgements.size > 20) bridge.acknowledgements.delete(bridge.acknowledgements.keys().next().value!);
     if (acknowledgement.status === 'rejected' && bridge.lease) this.invalidate(bridge, 'watchdog');
@@ -299,8 +292,7 @@ export class BridgeBroker {
       return { bridge: null, lease: null, acknowledgement: null };
     }
     return { bridge: this.status(bridge.id), lease: bridge.lease,
-      acknowledgement: [...bridge.acknowledgements.values()]
-        .filter((acknowledgement) => bridge.commands.get(acknowledgement.commandId)?.sessionId === sessionId).at(-1) ?? null };
+      acknowledgement: [...bridge.acknowledgements.values()].at(-1) ?? null };
   }
   status(id: string): BridgeStatus {
     const bridge = this.record(id);

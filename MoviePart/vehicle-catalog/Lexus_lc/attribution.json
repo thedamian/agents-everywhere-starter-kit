@@ -1,0 +1,21 @@
+{
+  "displayName": "Lexus LC",
+  "make": "Lexus",
+  "model": "LC",
+  "exterior": {
+    "filename": "exterior.jpg",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:2019_Lexus_LC500_(yellow),_front_left_(Greenwich_2019).jpg",
+    "directUrl": "https://upload.wikimedia.org/wikipedia/commons/3/39/2019_Lexus_LC500_%28yellow%29%2C_front_left_%28Greenwich_2019%29.jpg",
+    "license": "CC BY-SA 3.0",
+    "author": "Mr.choppers",
+    "transformation": "Wikimedia Commons thumbnail service scaled the source image to 1920x1078 pixels after the direct URL was rate-limited; no local pixel transformation was applied."
+  },
+  "interior": {
+    "filename": "interior.jpg",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:Lexus_LC500h_CN-Spec_Interior_11.jpg",
+    "directUrl": "https://upload.wikimedia.org/wikipedia/commons/c/c6/Lexus_LC500h_CN-Spec_Interior_11.jpg",
+    "license": "CC BY-SA 4.0",
+    "author": "Tangjunwen CN",
+    "transformation": "Wikimedia Commons thumbnail service scaled the source image to 1920x1275 pixels after the direct URL was rate-limited; no local pixel transformation was applied."
+  }
+}

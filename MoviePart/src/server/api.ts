@@ -2,7 +2,7 @@ import { createReadStream } from "node:fs";
 import { stat } from "node:fs/promises";
 import { Readable } from "node:stream";
 import { z } from "zod";
-import { consentSchema, frameDecisionRequestSchema, jobRequestSchema, productionModeOf, retryRequestSchema, MovieError, type AssetRecord, type MovieJob } from "../domain";
+import { consentSchema, frameDecisionRequestSchema, heroEndpointSelectionRequestSchema, jobRequestSchema, productionModeOf, retryRequestSchema, MovieError, type AssetRecord, type MovieJob } from "../domain";
 import type { AssetView, ConfigView, JobView, Readiness } from "../domain/http";
 import type { MovieConfig } from "../domain/services";
 import { JobStore } from "../jobs/store";
@@ -13,7 +13,11 @@ import { loadConfig } from "./config";
 import { LocalMediaRepository } from "./media";
 import { boundedBody, uploadPhotos } from "./uploads";
 import { uploadProductReferences } from "./product-upload";
-import { retrySummary, validateApprovedFrame, validateRetryAssets } from "../jobs/retry";
+import { retrySummary, validateApprovedFrame, validateHeroEndpoints, validateRetryAssets } from "../jobs/retry";
+import { lifecycleKeySchema } from "../jobs/lifecycle";
+import { UploadBatchStore } from "./upload-batches";
+import { terminalVeoMessage } from "../domain/veo-failure";
+import { activeVideoProvider } from "../domain/video-sequence-state";
 
 const privateHeaders = {
   "cache-control": "private, no-store",
@@ -39,23 +43,30 @@ export function assetView(asset: AssetRecord): AssetView {
 
 export function jobView(job: MovieJob): JobView {
   const retry = retrySummary(job);
+  const terminalVeo = terminalVeoMessage(job.error?.code);
   const movieFirst = productionModeOf(job) === "movie-first";
-  const requiredVideoPresent = job.request.video_provider === "openai-sora" ? job.hero?.provider === "OpenAI Sora"
-    : job.request.video_provider === "google-veo" ? job.hero?.provider === "Google Veo" : true;
+  const selectedVideoProvider = activeVideoProvider(job);
+  const requiredVideoPresent = selectedVideoProvider === "openai-sora" ? job.hero?.provider === "OpenAI Sora"
+    : selectedVideoProvider === "google-veo" ? job.hero?.provider === "Google Veo" : true;
   return {
     id: job.id, sessionId: job.request.session_id, status: job.status, createdAt: job.createdAt, updatedAt: job.updatedAt,
-    events: job.events, warnings: job.warnings, error: job.error, character: job.character, plan: job.plan,
+    events: job.events, warnings: job.warnings, error: job.error && terminalVeo ? { ...job.error, message: terminalVeo } : job.error, character: job.character, plan: job.plan,
     frames: movieFirst ? job.frames.filter(frame => frame.source === "extracted") : job.frames, hero: job.hero,
     productionMode: productionModeOf(job),
-    renderLayout: job.result?.renderLayout ?? job.request.render_layout ?? "storyboard",
-    ...((job.result?.renderLayout ?? job.request.render_layout) === "video-bookends"
+    renderLayout: movieFirst ? "storyboard" : job.result?.renderLayout ?? job.request.render_layout ?? "storyboard",
+    ...(!movieFirst && (job.result?.renderLayout ?? job.request.render_layout) === "video-bookends"
       ? { movieDurationSeconds: job.request.movie_duration_seconds ?? 15 } : {}),
     videoClips: job.videoSegments?.filter(segment => segment.clip).sort((a, b) => a.index - b.index).flatMap(segment => segment.clip ? [segment.clip] : [])
       ?? (job.hero ? [job.hero] : []),
-    result: !requiredVideoPresent ? null : movieFirst ? job.result : job.status === "COMPLETED" && !!job.plan && retry.remainingShots === 0 ? job.result : null,
+    result: job.error?.code === "JOB_CANCELLED" || !movieFirst && !requiredVideoPresent ? null : movieFirst ? job.result : job.status === "COMPLETED" && !!job.plan && retry.remainingShots === 0 ? job.result : null,
     retry,
     reviewRevision: job.designerDecisions?.length ?? 0,
-    designerReviewAllowed: !!job.plan && !job.result && (job.status === "FAILED" || !job.storyboardLocked && ["STORYBOARDING", "VALIDATING"].includes(job.status)),
+    designerReviewAllowed: job.error?.code !== "JOB_CANCELLED" && !terminalVeo && !!job.plan && !job.result && (job.status === "FAILED" || !job.storyboardLocked && ["STORYBOARDING", "VALIDATING"].includes(job.status)),
+    ...(job.heroEndpoints ? { heroEndpoints: job.heroEndpoints } : {}),
+    heroEndpointRevision: job.heroEndpointSelections?.length ?? 0,
+    heroEndpointSelectionAllowed: job.request.video_provider === "google-veo" && job.request.enable_hero_video
+      && job.status === "FAILED" && job.error?.code === "HERO_ENDPOINT_SELECTION_REQUIRED"
+      && !job.hero && !job.heroAttempted,
   };
 }
 
@@ -92,6 +103,7 @@ export function createApiHandlers(config: MovieConfig, dependencies: Dependencie
   const store = dependencies.store ?? new JobStore(config.dataDir);
   const catalog = dependencies.catalog ?? new ProductCatalog(config.dataDir, media);
   const auth = new SessionAuth(config);
+  const batches = new UploadBatchStore(store, media);
   const rendererReady = dependencies.rendererReady ?? (async () => (await import("../render")).createRenderer(config).ready());
   const guarded = <A extends unknown[]>(handle: (request: Request, ...args: A) => Promise<Response>) =>
     async (request: Request, ...args: A): Promise<Response> => {
@@ -117,12 +129,17 @@ export function createApiHandlers(config: MovieConfig, dependencies: Dependencie
 
   const verifyRecovery = async (job: MovieJob) => {
     const summary = retrySummary(job);
-    if (job.request.video_provider === "google-veo" && !job.hero && !providers().veo.available) {
+    const selectedVideoProvider = activeVideoProvider(job);
+    if (productionModeOf(job) !== "movie-first" && selectedVideoProvider === "google-veo" && !job.hero && !providers().veo.available) {
       throw new MovieError("VEO_NOT_READY", "Configure the Google video API key before retrying this animation-required movie.", 503);
+    }
+    if (productionModeOf(job) !== "movie-first" && selectedVideoProvider === "openai-sora" && !providers().openaiVideo?.available) {
+      throw new MovieError("OPENAI_VIDEO_NOT_READY", "Configure OpenAI Sora 2 Pro before authorizing this fallback.", 503);
     }
     if (summary.remainingShots && !(config.openaiKey && config.visionModel && config.imageModel)) {
       throw new MovieError("OPENAI_NOT_READY", "Configure OpenAI image generation and vision review before retrying unfinished shots.", 503);
     }
+    if (job.error?.code === "HERO_ENDPOINT_SELECTION_REQUIRED") validateHeroEndpoints(job);
     const [renderer, worker] = await Promise.all([rendererReady(), store.workerReadiness()]);
     if (!renderer.available) throw new MovieError("RENDERER_NOT_READY", renderer.message, 503);
     if (!worker.available) throw new MovieError("WORKER_NOT_READY", worker.message, 503);
@@ -149,7 +166,41 @@ export function createApiHandlers(config: MovieConfig, dependencies: Dependencie
     }),
     upload: guarded(async request => {
       const { ownerId } = await auth.authenticate(request, { mutation: true });
+      const key = request.headers.get("idempotency-key");
+      if (key !== null) {
+        const receipt = await batches.upload(request, ownerId, key);
+        return json({ assets: await Promise.all(receipt.assetIds.map(async id => assetView(await media.requireOwned(id, ownerId)))), receipt }, 201);
+      }
       return json({ assets: (await uploadPhotos(request, ownerId, media)).map(assetView) }, 201);
+    }),
+    getUploadBatch: guarded(async (request, key: string) => {
+      const { ownerId } = await auth.authenticate(request);
+      const receipt = await batches.get(ownerId, key);
+      if (!receipt) throw new MovieError("UPLOAD_NOT_FOUND", "Upload batch not found.", 404);
+      return json({ receipt, assets: receipt.state === "uploaded"
+        ? await Promise.all(receipt.assetIds.map(async id => assetView(await media.requireOwned(id, ownerId)))) : [] });
+    }),
+    deleteUploadBatch: guarded(async (request, key: string) => {
+      const { ownerId } = await auth.authenticate(request, { mutation: true });
+      const receipt = await batches.cancel(ownerId, key);
+      return json({ receipt }, receipt.assetsDeleted ? 200 : 202);
+    }),
+    getJobRequest: guarded(async (request, key: string) => {
+      const { ownerId } = await auth.authenticate(request);
+      const receipt = await store.receipt(ownerId, lifecycleKeySchema.parse(key));
+      if (!receipt) throw new MovieError("JOB_NOT_FOUND", "Movie request not found.", 404);
+      return json({ receipt });
+    }),
+    cancelJobRequest: guarded(async (request, key: string) => {
+      const { ownerId } = await auth.authenticate(request, { mutation: true });
+      const receipt = await store.cancelOwnedRequest(ownerId, lifecycleKeySchema.parse(key), media);
+      return json({ receipt }, receipt.assetsDeleted ? 200 : 202);
+    }),
+    cancelJob: guarded(async (request, id: string) => {
+      const { ownerId } = await auth.authenticate(request, { mutation: true });
+      const job = await store.getOwned(id, ownerId);
+      const receipt = await store.cancelOwnedRequest(ownerId, job.request.idempotency_key, media);
+      return json({ receipt }, receipt.assetsDeleted ? 200 : 202);
     }),
     uploadProduct: guarded(async (request, productId: string) => {
       await auth.authenticate(request, { mutation: true });
@@ -240,6 +291,24 @@ export function createApiHandlers(config: MovieConfig, dependencies: Dependencie
           jobId: current.id, ownerId, media, signal: request.signal,
         }, false);
       }, verifyRecovery);
+      return json({ job: jobView(job) });
+    }),
+    selectHeroEndpoint: guarded(async (request, id: string) => {
+      const { ownerId } = await auth.authenticate(request, { mutation: true });
+      if (request.headers.get("content-type")?.split(";")[0].trim().toLowerCase() !== "application/json") {
+        throw new MovieError("INVALID_CONTENT_TYPE", "Send the hero endpoint selection as application/json.", 415);
+      }
+      const bytes = await boundedBody(request, 4096);
+      let parsed: unknown;
+      try { parsed = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes)); } catch {
+        throw new MovieError("INVALID_JSON", "The hero endpoint selection must be valid JSON.", 400);
+      }
+      const input = heroEndpointSelectionRequestSchema.parse(parsed);
+      const job = await store.selectHeroEndpoint(id, ownerId, input, async (current, frame) => {
+        await validateApprovedFrame(frame, {
+          jobId: current.id, ownerId, media, signal: request.signal,
+        });
+      });
       return json({ job: jobView(job) });
     }),
     deleteJob: guarded(async (request, id: string) => {

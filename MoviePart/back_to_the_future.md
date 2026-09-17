@@ -1,4 +1,4 @@
-# Back to the Future — 30-Second Tesla Ad — Story Template
+# Back to the Future — 30-Second Toyota Ad — Story Template
 
 A shot-by-shot template for generating a personalized 30-second car ad where **our
 customer is the hero** of a *Back to the Future*–style moment. The coding agent reads
@@ -7,7 +7,7 @@ a time, then stitches them in order.
 
 We're borrowing the *feeling* of the movie — the ordinary-life-to-impossible-leap arc —
 not its specifics. No DeLorean, no characters, no logos from the film. The magic is our
-Tesla's silent, instant launch.
+Toyota's confident transition from an ordinary drive into an imagined adventure.
 
 ---
 
@@ -16,14 +16,14 @@ Tesla's silent, instant launch.
 1. Load `person.json` — this is our **hero**. Render the same person in every shot, using
    its `reference_images` as the identity anchor and its fields for face, hair, skin tone,
    build, and wardrobe. The wardrobe stays identical across all shots.
-2. Load `car.json` — this is our **hero car**. Render the same Tesla in every shot, using
+2. Load `car.json` — this is our **hero car**. Render the same Toyota in every shot, using
    its `reference_images` and fields. Keep one color throughout (from `car.exterior.color`).
 3. Generate each shot below as its own clip at the stated duration, then concatenate them
    in order 1 → 8. Total runtime is 30 seconds.
 4. Follow the **Consistency rules** and **Audio & tagline** sections exactly.
 
 Tokens like `{{person.hair.color}}` or `{{car.exterior.color}}` mean "pull this value from
-the JSON." `{{HERO}}` = the person from `person.json`. `{{CAR}}` = the Tesla from `car.json`.
+the JSON." `{{HERO}}` = the person from `person.json`. `{{CAR}}` = the Toyota from `car.json`.
 
 ---
 
@@ -33,7 +33,7 @@ the JSON." `{{HERO}}` = the person from `person.json`. `{{CAR}}` = the Tesla fro
 runtime_seconds: 30
 aspect_ratio: "9:16"          # vertical for social; switch to "16:9" for web/TV
 hero: person.json             # the customer, on screen as the hero
-car: car.json                 # Tesla Model 3 Performance
+car: car.json                 # Toyota model selected by the catalog
 look: "cinematic, warm, filmic; slight grain; anamorphic flares in the leap"
 arc: "ordinary world -> impossible leap -> mastery -> return transformed"
 palette: "starts drab and grey; blooms to warm gold after the leap"
@@ -44,7 +44,7 @@ palette: "starts drab and grey; blooms to warm gold after the leap"
 ## The story — 8 shots
 
 Timing adds up to 30 seconds. Each shot's `SUBJECT` is always `{{HERO}}` (same face, same
-wardrobe) and, where present, `{{CAR}}` (same Tesla, same color).
+wardrobe) and, where present, `{{CAR}}` (same Toyota, same color).
 
 ### Shot 1 — Ordinary World — 4s
 The "before." Our hero in a flat, everyday moment — nothing special yet. It has to feel
@@ -62,18 +62,18 @@ SOUND:    muted city hum
 ```
 
 ### Shot 2 — Call to Adventure — 3s
-Something shifts. The {{CAR}} wakes silently nearby — screen glow, a soft pulse of light.
+Something shifts. The {{CAR}} comes to life nearby — instrument glow, a soft pulse of light.
 The signal that this moment is about to stop being ordinary.
 
 ```
 SUBJECT:  {{HERO}} turning toward {{CAR}}
-ACTION:   the Tesla wakes silently — headlights and screen glow bloom; hero notices
+ACTION:   the Toyota comes to life — headlights and instrument-panel glow bloom; hero notices
 CAMERA:   over-the-shoulder from behind hero toward the car, slow push-in, 35mm
 SETTING:  same street, the car parked a few steps away
 LIGHTING: warm light rising from the car against the grey
 MOOD:     curiosity, "wait, what?"
 STYLE:    cinematic
-SOUND:    a rising electric tone, near-silent
+SOUND:    a subtle rising tone over restrained natural vehicle ambience
 ```
 
 ### Shot 3 — Refusal → Meeting the Mentor — 3s
@@ -99,7 +99,7 @@ present starts to bend at the edges.
 SUBJECT:  {{HERO}} in the driver's seat of {{CAR}}, {{car.interior.*}}
 ACTION:   hero settles in, both hands on the wheel, a decisive breath; foot presses
 CAMERA:   from the passenger side, slow arc toward the hero's face, 50mm
-SETTING:  {{CAR}} interior — minimalist dash, center screen glowing
+SETTING:  {{CAR}} interior — dashboard and controls matching the licensed cabin reference
 LIGHTING: warm screen light on the hero, world outside going soft
 MOOD:     commitment, anticipation
 STYLE:    cinematic
@@ -115,14 +115,14 @@ most seconds on purpose.
 
 ```
 SUBJECT:  {{HERO}} at the wheel of {{CAR}}, POV alternating with hero's face
-ACTION:   silent instant-torque launch; the grey street stretches into streaks of light and
+ACTION:   confident controlled acceleration; the grey street stretches into streaks of light and
           the world bends forward around the car; hero's face lit with awe
 CAMERA:   fast push-in on POV, cut to hero's face, wide 24mm
 SETTING:  street dissolving into a tunnel of light
 LIGHTING: brilliant streaking light trails, grey-to-gold
 MOOD:     awe, exhilaration
 STYLE:    cinematic, anamorphic flares
-SOUND:    swelling music, a sonic bloom, motor whine — no engine roar
+SOUND:    swelling music, a sonic bloom, restrained natural powertrain and road sound
 ```
 
 ### Shot 6 — The Reward — 4s
@@ -179,7 +179,7 @@ SOUND:    music resolves to a single clean note
   `reference_images`. One color only — `{{car.exterior.color}}`.
 - **Continuous world.** The look starts drab/grey (shots 1–4), transforms during the leap
   (shot 5), and stays warm/golden after (shots 6–8). Keep this progression unbroken.
-- **The car is near-silent.** No engine roar anywhere. The leap is a whoosh + motor whine.
+- **The car sounds natural.** Keep powertrain, tire and wind sound restrained beneath the music.
 
 ---
 
@@ -203,5 +203,5 @@ that single shot rather than the whole sequence.
 ## Creative & legal note
 
 We evoke the *feeling* of the famous time-jump — ordinary moment, impossible leap, transformed
-arrival — using our own imagery and our Tesla's real launch. We do not use the film's car
+arrival — using our own imagery and our Toyota's real launch. We do not use the film's car
 design, characters, or logos. And we only use a real customer's likeness with their permission.

@@ -1,0 +1,21 @@
+{
+  "displayName": "Lexus RX",
+  "make": "Lexus",
+  "model": "RX",
+  "exterior": {
+    "filename": "exterior.jpg",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:Lexus_RX_450h%2B_(AALH16)_1X7A1930.jpg",
+    "directUrl": "https://upload.wikimedia.org/wikipedia/commons/2/2d/Lexus_RX_450h%2B_%28AALH16%29_1X7A1930.jpg",
+    "license": "CC BY-SA 4.0",
+    "author": "Alexander-93",
+    "transformation": "Wikimedia Commons thumbnail service scaled the source image to 1920x1056 pixels after the direct URL was rate-limited; no local pixel transformation was applied."
+  },
+  "interior": {
+    "filename": "interior.jpg",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:2026_Lexus_RX_450h%2B_Interior.jpg",
+    "directUrl": "https://upload.wikimedia.org/wikipedia/commons/3/34/2026_Lexus_RX_450h%2B_Interior.jpg",
+    "license": "CC BY 4.0",
+    "author": "Szeremeta",
+    "transformation": "Wikimedia Commons thumbnail service scaled the source image to 1920x1280 pixels after the direct URL was rate-limited; no local pixel transformation was applied."
+  }
+}

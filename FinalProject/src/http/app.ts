@@ -1,4 +1,4 @@
-import { randomUUID } from "node:crypto";
+import { createHash, randomInt, randomUUID } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { Hono } from "hono";
@@ -8,6 +8,13 @@ import { logEvent } from "../logging.js";
 import { ApiError, Orchestrator } from "../orchestrator/service.js";
 import { ProviderFailure } from "../providers/http-client.js";
 import { bearer, tokenMatches } from "./auth.js";
+import {
+  KioskPairExchangeSchema, KioskPairingInputSchema, ShowroomContractError,
+  ShowroomReferenceUploadQuerySchema,
+} from "../contracts/showroom.js";
+import { CalendarError } from "../calendar/errors.js";
+import type { ShowroomVoiceService } from "../providers/voice.js";
+import { BridgeError } from "../bridge/broker.js";
 
 type AppEnvironment = { Variables: { requestId: string } };
 
@@ -37,11 +44,11 @@ async function boundedBytes(request: Request, limit: number): Promise<Uint8Array
   return Buffer.concat(chunks, size);
 }
 
-async function jsonBody(request: Request): Promise<unknown> {
+export async function jsonBody(request: Request, limit = 16_384): Promise<unknown> {
   if (request.headers.get("content-type")?.split(";")[0]?.trim() !== "application/json") {
     throw new ApiError(415, "CONTENT_TYPE", "Use application/json for commands and events.");
   }
-  const text = new TextDecoder().decode(await boundedBytes(request, 16_384));
+  const text = new TextDecoder().decode(await boundedBytes(request, limit));
   try { return JSON.parse(text); } catch {
     throw new ApiError(400, "INVALID_JSON", "Request body is not valid JSON.");
   }
@@ -53,11 +60,22 @@ export function createApp(options: {
   deviceToken: string;
   root?: string;
   log?: typeof logEvent;
+  voice?: ShowroomVoiceService;
+  extensions?: Hono[];
+  calendarProvider?: "disabled" | "google";
 }) {
   const { orchestrator, config, deviceToken } = options;
   const root = options.root ?? process.cwd();
   const log = options.log ?? logEvent;
   const app = new Hono<AppEnvironment>();
+  const showroom = () => {
+    if (!orchestrator.showroom) throw new ApiError(503, "SHOWROOM_DISABLED", "The guided showroom is disabled.");
+    return orchestrator.showroom;
+  };
+  const pairings = new Map<string, number>();
+  const codeHash = (code: string) => createHash("sha256").update(code).digest("hex");
+  let exchangeWindow = Date.now();
+  let exchangeAttempts = 0;
   app.use("*", async (context, next) => {
     const requestId = randomUUID();
     context.set("requestId", requestId);
@@ -78,7 +96,8 @@ export function createApp(options: {
     }
     const origin = context.req.header("origin");
     const defaultOrigins = [`http://${host}`, `https://${host}`];
-    const permitted = config.allowedOrigins.length ? config.allowedOrigins : defaultOrigins;
+    const permitted = [...(config.allowedOrigins.length ? config.allowedOrigins : defaultOrigins),
+      ...(config.SHOWROOM_BRIDGE_ENABLED ? config.bridgeOrigins : [])];
     if (origin && !permitted.includes(origin)) {
       throw new ApiError(403, "ORIGIN_DENIED", "Browser origin is not permitted.");
     }
@@ -96,11 +115,11 @@ export function createApp(options: {
 
   app.onError((error, context) => {
     const requestId = context.get("requestId");
-    const requestedStatus = error instanceof ApiError ? error.status : error instanceof ProviderFailure ? 502 : error instanceof z.ZodError ? 400 : 500;
+    const requestedStatus = error instanceof ApiError || error instanceof CalendarError || error instanceof BridgeError ? error.status : error instanceof ShowroomContractError ? 409 : error instanceof ProviderFailure ? 502 : error instanceof z.ZodError ? 400 : 500;
     const errorStatuses = [400, 401, 403, 404, 405, 409, 410, 413, 415, 422, 429, 500, 502, 503, 504] as const;
     const status = errorStatuses.find((candidate) => candidate === requestedStatus) ?? 500;
-    const code = error instanceof ApiError || error instanceof ProviderFailure ? error.code : error instanceof z.ZodError ? "INVALID_INPUT" : "INTERNAL_ERROR";
-    const message = error instanceof ApiError || error instanceof ProviderFailure ? error.message : error instanceof z.ZodError ? "Input does not match the versioned contract." : "The request failed. Use the request ID to inspect server diagnostics.";
+    const code = error instanceof ApiError || error instanceof ProviderFailure || error instanceof ShowroomContractError || error instanceof BridgeError ? error.code : error instanceof z.ZodError ? "INVALID_INPUT" : "INTERNAL_ERROR";
+    const message = error instanceof ApiError || error instanceof ProviderFailure || error instanceof ShowroomContractError || error instanceof BridgeError ? error.message : error instanceof z.ZodError ? "Input does not match the versioned contract." : "The request failed. Use the request ID to inspect server diagnostics.";
     log({ event: "request_failed", requestId, status, code });
     return context.json({ error: { code, message, requestId } }, status);
   });
@@ -109,6 +128,12 @@ export function createApp(options: {
   app.get("/readyz", (context) => context.json({
     status: "ready",
     providers: { brief: config.BRIEF_PROVIDER, profile: config.PROFILE_PROVIDER, media: config.MEDIA_PROVIDER, job: "local", followup: "disabled" },
+    showroom: {
+      mode: config.SHOWROOM_MODE,
+      voice: { enabled: !!options.voice, model: config.VOICE_MODEL },
+      calendar: { provider: options.calendarProvider ?? "disabled" },
+      bridge: { enabled: config.SHOWROOM_BRIDGE_ENABLED },
+    },
     liveIntegrationVerified: false,
   }));
   const staticFiles: Record<string, [string, string]> = {
@@ -124,6 +149,36 @@ export function createApp(options: {
     }));
   }
   app.get("/", (context) => context.redirect("/dev"));
+
+  for (const extension of options.extensions ?? []) app.route("/", extension);
+
+  app.post("/v1/operator/kiosk-pairings", async (context) => {
+    showroom();
+    if (!config.SHOWROOM_OPERATOR_TOKEN || !tokenMatches(bearer(context.req.header("authorization")), config.SHOWROOM_OPERATOR_TOKEN)) {
+      throw new ApiError(401, "OPERATOR_AUTH_REQUIRED", "A private operator credential is required.");
+    }
+    KioskPairingInputSchema.parse(await jsonBody(context.req.raw));
+    for (const [key, expiresAt] of pairings) if (expiresAt <= Date.now()) pairings.delete(key);
+    if (pairings.size >= 32) throw new ApiError(429, "PAIRING_LIMIT", "Too many active pairing codes.");
+    const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    let pairingCode: string;
+    do { pairingCode = Array.from({ length: 8 }, () => alphabet[randomInt(alphabet.length)]).join(""); } while (pairings.has(codeHash(pairingCode)));
+    const expiresAt = Date.now() + 120_000;
+    pairings.set(codeHash(pairingCode), expiresAt);
+    return context.json({ pairingCode, expiresAt }, 201);
+  });
+  app.post("/v1/kiosk/pair", async (context) => {
+    showroom();
+    if (Date.now() - exchangeWindow >= 60_000) { exchangeWindow = Date.now(); exchangeAttempts = 0; }
+    if (++exchangeAttempts > 60) throw new ApiError(429, "PAIRING_RATE_LIMIT", "Wait before trying another pairing code.");
+    const input = KioskPairExchangeSchema.parse(await jsonBody(context.req.raw));
+    const key = codeHash(input.pairingCode);
+    const expiry = pairings.get(key);
+    if (!expiry || expiry <= Date.now()) throw new ApiError(401, "PAIRING_INVALID", "The pairing code is invalid or expired.");
+    pairings.delete(key);
+    const created = orchestrator.createSession();
+    return context.json({ ...created, expiresAt: showroom().snapshot(created.sessionId).expiresAt }, 201);
+  });
 
   app.post("/v1/sessions", async (context) => {
     if (!tokenMatches(bearer(context.req.header("authorization")), deviceToken)) {
@@ -158,6 +213,39 @@ export function createApp(options: {
     const after = context.req.query("afterRevision");
     if (after !== undefined && !/^\d{1,9}$/.test(after)) throw new ApiError(400, "INVALID_CURSOR", "Revision cursor must be a nonnegative integer.");
     return context.json(await orchestrator.snapshot(context.req.param("id"), after === undefined ? undefined : Number(after)));
+  });
+  app.get("/v1/sessions/:id/showroom", context => context.json(showroom().snapshot(context.req.param("id"))));
+  app.get("/v1/sessions/:id/showroom/catalog", async context => context.json(await showroom().catalog(context.req.param("id"))));
+  app.post("/v1/sessions/:id/showroom/actions", async context =>
+    context.json(await showroom().action(context.req.param("id"), await jsonBody(context.req.raw))));
+  const referenceQuery = (request: Request) => {
+    const query = new URL(request.url).searchParams;
+    if ([...query.keys()].some(key => !["expectedRevision", "eventId"].includes(key))
+        || query.getAll("expectedRevision").length !== 1 || query.getAll("eventId").length !== 1
+        || !/^\d{1,16}$/.test(query.get("expectedRevision") ?? "")) {
+      throw new ApiError(400, "INVALID_INPUT", "Supply one expectedRevision and eventId for reference mutations.");
+    }
+    return ShowroomReferenceUploadQuerySchema.parse({ expectedRevision: Number(query.get("expectedRevision")), eventId: query.get("eventId") });
+  };
+  app.post("/v1/sessions/:id/showroom/references", async context => {
+    const query = referenceQuery(context.req.raw);
+    const bytes = await boundedBytes(context.req.raw, 5 * 1024 * 1024);
+    return context.json(await showroom().upload(context.req.param("id"), bytes,
+      context.req.header("content-type")?.split(";")[0]?.trim() ?? "", query.expectedRevision, query.eventId), 201);
+  });
+  app.delete("/v1/sessions/:id/showroom/references/:assetId", async context => {
+    const query = referenceQuery(context.req.raw);
+    return context.json(await showroom().deleteReference(context.req.param("id"), context.req.param("assetId"), query.expectedRevision, query.eventId));
+  });
+  app.post("/v1/sessions/:id/showroom/voice", async context => {
+    if (!options.voice) throw new ApiError(503, "VOICE_DISABLED", "Live voice is disabled. Use touch controls.");
+    return context.json(await options.voice.setup(context.req.param("id"), await jsonBody(context.req.raw, 768 * 1024), context.req.raw.signal));
+  });
+  app.delete("/v1/sessions/:id/showroom/voice", async context => {
+    if (!options.voice) throw new ApiError(503, "VOICE_DISABLED", "Live voice is disabled.");
+    const { generation } = z.object({ generation: z.number().int().nonnegative() }).strict().parse(await jsonBody(context.req.raw));
+    options.voice.end(context.req.param("id"), generation);
+    return context.body(null, 204);
   });
   app.post("/v1/sessions/:id/events", async (context) =>
     context.json(await orchestrator.event(context.req.param("id"), await jsonBody(context.req.raw))));

@@ -5,11 +5,11 @@ import os from "node:os";
 import path from "node:path";
 import test, { type TestContext } from "node:test";
 import sharp from "sharp";
-import { getTimeline, type CharacterReference, type FrameDecisionRequest, type MoviePlan, type StoryboardFrame } from "../src/domain";
+import { getTimeline, MovieError, type CharacterReference, type FrameDecisionRequest, type MoviePlan, type StoryboardFrame } from "../src/domain";
 import { isFrameApproved, selectStoryboardFrames } from "../src/domain/storyboard-state";
 import { JobStore } from "../src/jobs/store";
 import { MovieWorker } from "../src/jobs/worker";
-import { retrySummary, validateApprovedFrame } from "../src/jobs/retry";
+import { retrySummary, validateApprovedFrame, validateHeroEndpoints } from "../src/jobs/retry";
 import { LocalMediaRepository, normalizeImage } from "../src/server/media";
 import { createApiHandlers, jobView } from "../src/server/api";
 import { SessionAuth } from "../src/server/auth";
@@ -173,5 +173,57 @@ test("selected older candidate is authoritative while other candidates and AI ve
   assert.equal(saved.frames.at(-1)?.designerDecision?.action, "regenerate");
   await validateApprovedFrame(saved.frames[1], {
     ownerId: f.ownerId, jobId: f.job.id, media: f.media, signal: new AbortController().signal,
+  });
+
+  test("designer selects distinct approved Veo start and end frames with durable revision checks", async t => {
+    const f = await fixture(t);
+    await f.store.update(f.job.id, job => {
+      job.request.enable_hero_video = true;
+      job.request.video_provider = "google-veo";
+      job.request.render_layout = "video-bookends";
+      job.request.movie_duration_seconds = 15;
+      job.plan!.videoProvider = "google-veo";
+      job.error = {
+        code: "HERO_ENDPOINT_SELECTION_REQUIRED", stage: "VALIDATING",
+        message: "Choose approved storyboard endpoints.",
+      };
+    });
+    const awaitingEndpoints = await f.store.get(f.job.id);
+    assert.throws(() => validateHeroEndpoints(awaitingEndpoints), (error: unknown) =>
+      error instanceof MovieError && error.code === "HERO_ENDPOINT_SELECTION_REQUIRED");
+    const request = (body: unknown) => new Request(`http://localhost:3200/api/movie-jobs/${f.job.id}/hero-endpoints`, {
+      method: "POST",
+      headers: { host: "localhost:3200", origin: "http://localhost:3200", cookie: f.request(decision()).headers.get("cookie")!, "content-type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    const start = {
+      role: "start" as const, asset_id: f.frames[0].assetId, idempotency_key: randomUUID(),
+      expected_revision: 0, expected_attempt: 0,
+    };
+    const first = await f.handlers.selectHeroEndpoint(request(start), f.job.id);
+    assert.equal(first.status, 200);
+    assert.equal((await first.json()).job.heroEndpoints.startAssetId, f.frames[0].assetId);
+    const identical = await f.handlers.selectHeroEndpoint(request({
+      role: "end", asset_id: f.frames[0].assetId, idempotency_key: randomUUID(),
+      expected_revision: 1, expected_attempt: 0,
+    }), f.job.id);
+    assert.equal(identical.status, 409);
+    const end = {
+      role: "end" as const, asset_id: f.frames[2].assetId, idempotency_key: randomUUID(),
+      expected_revision: 1, expected_attempt: 0,
+    };
+    const second = await f.handlers.selectHeroEndpoint(request(end), f.job.id);
+    assert.equal(second.status, 200);
+    const view = (await second.json()).job;
+    assert.deepEqual(view.heroEndpoints, { startAssetId: f.frames[0].assetId, endAssetId: f.frames[2].assetId });
+    assert.deepEqual(validateHeroEndpoints(await f.store.get(f.job.id)), {
+      startAssetId: f.frames[0].assetId, endAssetId: f.frames[2].assetId,
+    });
+    assert.equal(view.heroEndpointRevision, 2);
+    assert.equal(view.heroEndpointSelectionAllowed, true);
+    assert.equal((await f.handlers.selectHeroEndpoint(request(start), f.job.id)).status, 200, "idempotent replay");
+    assert.equal((await f.handlers.selectHeroEndpoint(request({
+      ...end, asset_id: f.frames[3].assetId, idempotency_key: randomUUID(), expected_revision: 1,
+    }), f.job.id)).status, 409, "stale endpoint revision");
   });
 });

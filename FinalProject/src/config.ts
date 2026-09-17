@@ -9,6 +9,16 @@ const settings = z.object({
   BRIEF_PROVIDER: z.enum(["mock", "openai"]).default("mock"),
   PROFILE_PROVIDER: z.enum(["mock", "exa"]).default("mock"),
   MEDIA_PROVIDER: z.enum(["mock", "http"]).default("mock"),
+  SHOWROOM_MODE: z.enum(["disabled", "fixture", "studio"]).default("disabled"),
+  MOVIE_STUDIO_URL: z.url().default("http://127.0.0.1:3200"),
+  MOVIE_API_TOKEN: z.string().optional(),
+  VOICE_ENABLED: flag.default(false),
+  VOICE_MODEL: z.string().min(1).default("gpt-live-1"),
+  REGULAR_MODEL: z.string().min(1).optional(),
+  REASONING_MODEL: z.string().min(1).optional(),
+  SHOWROOM_BRIDGE_ENABLED: flag.default(false),
+  SHOWROOM_OPERATOR_TOKEN: z.string().regex(/^[A-Za-z0-9._~-]{24,256}$/).optional(),
+  SHOWROOM_BRIDGE_ORIGINS: z.string().optional(),
   JOB_PROVIDER: z.literal("local").default("local"),
   FOLLOWUP_PROVIDER: z.literal("disabled").default("disabled"),
   ALLOW_DEMO_FALLBACKS: flag.default(false),
@@ -77,8 +87,33 @@ export function readConfig(environment: NodeJS.ProcessEnv = process.env) {
       throw new Error("Media service must use HTTPS (or loopback HTTP), without credentials, query or fragment in its URL.");
     }
   }
+  if (config.SHOWROOM_MODE === "studio") {
+    const url = new URL(config.MOVIE_STUDIO_URL);
+    if (!config.MOVIE_API_TOKEN || !isLoopback(url.hostname) || !["http:", "https:"].includes(url.protocol)
+        || url.pathname !== "/" || url.username || url.password || url.search || url.hash || config.MOCK_ONLY) {
+      throw new Error("Studio showroom mode requires a loopback MOVIE_STUDIO_URL and MOVIE_API_TOKEN; MOCK_ONLY cannot use it.");
+    }
+  }
+  if (config.VOICE_ENABLED && (!config.OPENAI_API_KEY || config.SHOWROOM_MODE === "disabled" || config.MOCK_ONLY)) {
+    throw new Error("Live voice requires OPENAI_API_KEY and an enabled showroom; MOCK_ONLY cannot stream live voice.");
+  }
+  if (config.REGULAR_MODEL && config.REASONING_MODEL && config.REGULAR_MODEL !== config.REASONING_MODEL) {
+    throw new Error("REGULAR_MODEL and its REASONING_MODEL compatibility alias must agree.");
+  }
+  const bridgeOrigins = (config.SHOWROOM_BRIDGE_ORIGINS ?? "").split(",").map(value => value.trim()).filter(Boolean);
+  if (config.SHOWROOM_BRIDGE_ENABLED && (!config.SHOWROOM_OPERATOR_TOKEN || !bridgeOrigins.length || config.SHOWROOM_MODE === "disabled")) {
+    throw new Error("An enabled bridge requires SHOWROOM_OPERATOR_TOKEN, exact SHOWROOM_BRIDGE_ORIGINS and an enabled showroom.");
+  }
+  for (const origin of bridgeOrigins) {
+    const url = new URL(origin);
+    if (!isLoopback(url.hostname) || url.origin !== origin || !["http:", "https:"].includes(url.protocol)) {
+      throw new Error("SHOWROOM_BRIDGE_ORIGINS must be exact loopback HTTP(S) origins.");
+    }
+  }
   return {
     ...config,
+    regularModel: config.REGULAR_MODEL ?? config.REASONING_MODEL ?? "gpt-5.6-luna",
+    bridgeOrigins,
     allowedOrigins: origins,
     allowedHosts: [...new Set(["localhost", "127.0.0.1", "[::1]", ...hosts])],
   };

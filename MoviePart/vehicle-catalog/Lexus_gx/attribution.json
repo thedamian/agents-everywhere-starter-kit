@@ -1,0 +1,21 @@
+{
+  "displayName": "Lexus GX",
+  "make": "Lexus",
+  "model": "GX",
+  "exterior": {
+    "filename": "exterior.jpg",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:Lexus_GX550_(J250)_Washington_DC_Metro_Area,_USA_(1).jpg",
+    "directUrl": "https://upload.wikimedia.org/wikipedia/commons/0/0f/Lexus_GX550_%28J250%29_Washington_DC_Metro_Area%2C_USA_%281%29.jpg",
+    "license": "CC BY 4.0",
+    "author": "OWS Photography",
+    "transformation": "Wikimedia Commons thumbnail service scaled the source image to 1920x1536 pixels after the direct URL was rate-limited; no local pixel transformation was applied."
+  },
+  "interior": {
+    "filename": "interior.png",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:2024_Lexus_GX_550_Luxury%2B_(United_States)_interior.png",
+    "directUrl": "https://upload.wikimedia.org/wikipedia/commons/c/ce/2024_Lexus_GX_550_Luxury%2B_%28United_States%29_interior.png",
+    "license": "CC BY 3.0",
+    "author": "Autosdeprimera",
+    "transformation": "Wikimedia Commons thumbnail service scaled the source image to 1920x1152 pixels after the direct URL was rate-limited; no local pixel transformation was applied."
+  }
+}

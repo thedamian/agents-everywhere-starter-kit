@@ -1,0 +1,21 @@
+{
+  "displayName": "Lexus LS",
+  "make": "Lexus",
+  "model": "LS",
+  "exterior": {
+    "filename": "exterior.jpg",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:Lexus_LS_500h_GVF50_FL_Manganese_Luster_01.jpg",
+    "directUrl": "https://upload.wikimedia.org/wikipedia/commons/7/76/Lexus_LS_500h_GVF50_FL_Manganese_Luster_01.jpg",
+    "license": "CC BY-SA 4.0",
+    "author": "Ethan Llamas",
+    "transformation": "Wikimedia Commons thumbnail service scaled the source image to 1920x1280 pixels after the direct URL was rate-limited; no local pixel transformation was applied."
+  },
+  "interior": {
+    "filename": "interior.jpg",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:The_Interior_of_Lexus_LS500h_%22EXECUTIVE%22_CN-Spec_in_Tianhe_39_(2018-11-04).jpg",
+    "directUrl": "https://upload.wikimedia.org/wikipedia/commons/1/18/The_Interior_of_Lexus_LS500h_%22EXECUTIVE%22_CN-Spec_in_Tianhe_39_%282018-11-04%29.jpg",
+    "license": "CC BY-SA 4.0",
+    "author": "Tangjunwen CN",
+    "transformation": "Wikimedia Commons thumbnail service scaled the source image to 1920x1275 pixels after the direct URL was rate-limited; no local pixel transformation was applied."
+  }
+}

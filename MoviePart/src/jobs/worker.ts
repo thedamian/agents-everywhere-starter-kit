@@ -1,5 +1,5 @@
 import { MovieError, type MovieJob, type RenderResult, type StoryboardFrame } from "../domain";
-import type { GenerationContext, MovieConfig, MovieCheckpoint } from "../domain/services";
+import type { GenerationContext, MediaRepository, MovieConfig, MovieCheckpoint } from "../domain/services";
 import { LocalMediaRepository } from "../server/media";
 import { JobStore, terminal, WORKER_HEARTBEAT_MS } from "./store";
 import { selectStoryboardFrames } from "../domain/storyboard-state";
@@ -68,8 +68,42 @@ export class MovieWorker {
   private async processNext(token: string): Promise<boolean> {
     const job = await this.store.claim(token);
     if (!job) return false;
+    const cancellation = new AbortController();
+    const signal = AbortSignal.any([this.controller.signal, cancellation.signal]);
+    const writes = new Set<Promise<unknown>>();
+    const scopedMedia: MediaRepository = {
+      getAsset: id => this.media.getAsset(id),
+      readAsset: id => this.media.readAsset(id),
+      assetPath: id => this.media.assetPath(id),
+      saveAsset: input => {
+        signal.throwIfAborted();
+        if (input.ownerId !== job.ownerId || input.jobId !== job.id) {
+          throw new MovieError("INVALID_ARTIFACT", "Generated assets must belong to the active movie.", 400);
+        }
+        const work = this.media.saveAsset(input);
+        writes.add(work);
+        void work.then(() => writes.delete(work), () => writes.delete(work));
+        return work;
+      },
+    };
+    let cancellationWork = Promise.resolve();
+    let checkingCancellation = false;
+    const cancellationRequested = async () => !!(await this.store.receipt(job.ownerId, job.request.idempotency_key))?.cancelledAt;
+    const checkCancellation = async () => {
+      if (await cancellationRequested()) {
+        cancellation.abort(new MovieError("JOB_CANCELLED", "The owner cancelled this movie.", 410));
+      }
+    };
+    const cancellationTimer = setInterval(() => {
+      if (checkingCancellation || signal.aborted) return;
+      checkingCancellation = true;
+      cancellationWork = checkCancellation().catch(error => {
+        cancellation.abort(error);
+      }).finally(() => { checkingCancellation = false; });
+    }, 100);
+    cancellationTimer.unref();
     const mutate = async (change: (current: MovieJob) => void) => {
-      this.controller.signal.throwIfAborted();
+      signal.throwIfAborted();
       await this.store.update(job.id, current => {
         if (terminal(current)) throw new MovieError("JOB_TERMINAL", "The job has already ended.", 409);
         change(current);
@@ -86,7 +120,7 @@ export class MovieWorker {
       });
     };
     const context: GenerationContext = {
-      jobId: job.id, ownerId: job.ownerId, media: this.media, signal: this.controller.signal,
+      jobId: job.id, ownerId: job.ownerId, media: scopedMedia, signal,
       report: async update => {
         if (update.stage === "COMPLETED" || update.stage === "FAILED") {
           throw new MovieError("INVALID_STAGE", "Only the worker may complete or fail a job.");
@@ -110,7 +144,7 @@ export class MovieWorker {
       getFrames: async () => (await this.store.get(job.id)).frames,
       finalizeStoryboard: async () => {
         const locked = await this.store.update(job.id, current => {
-          this.controller.signal.throwIfAborted();
+          signal.throwIfAborted();
           if (terminal(current) || !current.plan) throw new MovieError("JOB_TERMINAL", "The movie is no longer available for rendering.", 409);
           const selected = selectStoryboardFrames(current.frames, current.plan.shots.map(shot => shot.id));
           validateRenderInput({ plan: current.plan, frames: selected, hero: current.hero }, current.id);
@@ -120,8 +154,10 @@ export class MovieWorker {
       },
     };
     try {
+      await checkCancellation();
+      signal.throwIfAborted();
       const result = await this.execute(job, context, async patch => mutate(current => { Object.assign(current, patch); }), this.config);
-      this.controller.signal.throwIfAborted();
+      signal.throwIfAborted();
       const asset = await this.media.requireOwned(result.assetId, job.ownerId);
       if (asset.jobId !== job.id || asset.kind !== "video") throw new MovieError("INVALID_ARTIFACT", "The renderer did not produce a private video asset for this job.");
       await this.store.update(job.id, current => {
@@ -130,22 +166,33 @@ export class MovieWorker {
         current.events.push({ at: new Date().toISOString(), stage: "COMPLETED", message: "Movie ready.", provider: null, shotId: null });
       });
     } catch (error) {
-      await this.store.update(job.id, current => {
-        const stage = current.status;
-        const aborted = this.controller.signal.aborted;
-        current.error = {
-          code: this.heartbeatFailure?.code ?? (aborted ? "WORKER_ABORTED" : error instanceof MovieError ? error.code : "GENERATION_FAILED"),
-          message: this.heartbeatFailure
-            ? `${this.heartbeatFailure.message} Saved artifacts remain available; paid operations will not be repeated automatically.`
-            : aborted
-            ? "The local worker was stopped. Saved artifacts remain available; paid operations will not be repeated automatically."
-            : error instanceof MovieError ? this.cleanMessage(error.message) : `Generation failed during ${stage}. Saved artifacts were retained.`,
-          stage,
-        };
-        current.status = "FAILED";
-        current.events.push({ at: new Date().toISOString(), stage: "FAILED", message: current.error.message, provider: null, shotId: null });
-      });
-    } finally { await this.store.finishClaim(job.id, token); }
+      if (!await cancellationRequested()) {
+        await this.store.update(job.id, current => {
+          const stage = current.status;
+          const aborted = this.controller.signal.aborted;
+          current.error = {
+            code: this.heartbeatFailure?.code ?? (aborted ? "WORKER_ABORTED" : error instanceof MovieError ? error.code : "GENERATION_FAILED"),
+            message: this.heartbeatFailure
+              ? `${this.heartbeatFailure.message} Saved artifacts remain available; paid operations will not be repeated automatically.`
+              : aborted
+              ? "The local worker was stopped. Saved artifacts remain available; paid operations will not be repeated automatically."
+              : error instanceof MovieError ? this.cleanMessage(error.message) : `Generation failed during ${stage}. Saved artifacts were retained.`,
+            stage,
+          };
+          current.status = "FAILED";
+          current.events.push({ at: new Date().toISOString(), stage: "FAILED", message: current.error.message, provider: null, shotId: null });
+        });
+      }
+    } finally {
+      clearInterval(cancellationTimer);
+      cancellation.abort(new MovieError("JOB_SETTLED", "Movie execution has ended.", 410));
+      await cancellationWork;
+      await Promise.allSettled(writes);
+      await this.store.finishClaim(job.id, token);
+      if (await cancellationRequested()) {
+        await this.store.cancelOwnedRequest(job.ownerId, job.request.idempotency_key, this.media);
+      }
+    }
     return true;
   }
 

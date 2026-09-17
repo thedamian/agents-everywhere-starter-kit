@@ -1,0 +1,19 @@
+{
+  "displayName": "Toyota 4Runner",
+  "make": "Toyota",
+  "model": "4Runner",
+  "exterior": {
+    "filename": "exterior.jpg",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:2019_Toyota_4Runner_SR5_4.0L_front_6.16.19.jpg",
+    "directUrl": "https://upload.wikimedia.org/wikipedia/commons/b/b2/2019_Toyota_4Runner_SR5_4.0L_front_6.16.19.jpg",
+    "license": "CC BY-SA 4.0",
+    "author": "Kevauto"
+  },
+  "interior": {
+    "filename": "interior.jpg",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:2023_Toyota_4Runner01.jpg",
+    "directUrl": "https://upload.wikimedia.org/wikipedia/commons/a/a8/2023_Toyota_4Runner01.jpg",
+    "license": "CC BY 4.0",
+    "author": "Iamjosemon"
+  }
+}

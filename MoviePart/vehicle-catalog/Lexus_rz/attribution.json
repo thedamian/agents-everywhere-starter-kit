@@ -1,0 +1,21 @@
+{
+  "displayName": "Lexus RZ (BEV)",
+  "make": "Lexus",
+  "model": "RZ (BEV)",
+  "exterior": {
+    "filename": "exterior.jpg",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:2024_Lexus_RZ_450e_DIRECT-4_in_Sonic_Copper,_front_right,_07-14-2024.jpg",
+    "directUrl": "https://upload.wikimedia.org/wikipedia/commons/b/bf/2024_Lexus_RZ_450e_DIRECT-4_in_Sonic_Copper%2C_front_right%2C_07-14-2024.jpg",
+    "license": "CC BY-SA 4.0",
+    "author": "Ethan Llamas",
+    "transformation": "Wikimedia Commons thumbnail service scaled the source image to 1920x1320 pixels after the direct URL was rate-limited; no local pixel transformation was applied."
+  },
+  "interior": {
+    "filename": "interior.jpg",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:Lexus_RZ_450e%22F_SPORT_Performance%22_(ZAA-XEBM15-AWDLS(T))_interior.jpg",
+    "directUrl": "https://upload.wikimedia.org/wikipedia/commons/b/b9/Lexus_RZ_450e%22F_SPORT_Performance%22_%28ZAA-XEBM15-AWDLS%28T%29%29_interior.jpg",
+    "license": "CC BY-SA 4.0",
+    "author": "Tokumeigakarinoaoshima",
+    "transformation": "Wikimedia Commons thumbnail service scaled the source image to 1920x1440 pixels after the direct URL was rate-limited; no local pixel transformation was applied."
+  }
+}

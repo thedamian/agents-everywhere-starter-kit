@@ -1,0 +1,21 @@
+{
+  "displayName": "Toyota Tacoma",
+  "make": "Toyota",
+  "model": "Tacoma",
+  "exterior": {
+    "filename": "exterior.jpg",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:Toyota_Tacoma_TRD_Off_Road_(N400)_IMG_9735.jpg",
+    "directUrl": "https://upload.wikimedia.org/wikipedia/commons/4/40/Toyota_Tacoma_TRD_Off_Road_%28N400%29_IMG_9735.jpg",
+    "license": "CC BY-SA 4.0",
+    "author": "Alexander-93",
+    "transformation": "Wikimedia Commons thumbnail service scaled the source image to 1920x985 pixels after the direct URL was rate-limited; no local pixel transformation was applied."
+  },
+  "interior": {
+    "filename": "interior.jpg",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:2024_Toyota_Tacoma_TRD_Sport_interior.jpg",
+    "directUrl": "https://upload.wikimedia.org/wikipedia/commons/f/f6/2024_Toyota_Tacoma_TRD_Sport_interior.jpg",
+    "license": "CC BY-SA 4.0",
+    "author": "Deathpallie325",
+    "transformation": "Wikimedia Commons thumbnail service scaled the source image to 1920x1080 pixels after the direct URL was rate-limited; no local pixel transformation was applied."
+  }
+}

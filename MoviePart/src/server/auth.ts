@@ -49,7 +49,14 @@ export class SessionAuth {
       if (!supplied || !configured || !timingSafeEqual(Buffer.from(digest(supplied)), Buffer.from(digest(configured)))) {
         throw new MovieError("UNAUTHORIZED", "A valid API token is required.", 401);
       }
-      return { ownerId: `machine:${digest(configured)}` };
+      const scope = request.headers.get("x-movie-session-id");
+      if (scope !== null && !/^[a-zA-Z0-9_-]{1,128}$/.test(scope)) {
+        throw new MovieError("INVALID_SESSION_SCOPE", "Use a valid private movie session scope.", 400);
+      }
+      return { ownerId: `machine:${digest(configured)}${scope === null ? "" : `:${digest(scope)}`}` };
+    }
+    if (request.headers.has("x-movie-session-id")) {
+      throw new MovieError("UNAUTHORIZED", "Session-scoped machine requests require an API token.", 401);
     }
     if (options.mutation && request.headers.get("origin") !== url.origin) {
       throw new MovieError("UNTRUSTED_ORIGIN", "Browser mutations require the same Origin as the app.", 403);

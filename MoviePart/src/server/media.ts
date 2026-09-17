@@ -92,16 +92,17 @@ export class LocalMediaRepository implements MediaRepository {
       filename: `${id}.media`, bytes: input.bytes.byteLength, width: input.width ?? null,
       height: input.height ?? null, createdAt: new Date().toISOString(),
     });
-    await atomicWrite(path.join(this.directory, asset.filename), input.bytes);
+    // Publish ownership before bytes so interrupted writes remain discoverable for cleanup.
     await atomicWrite(this.metadataPath(id), JSON.stringify({ asset, consent, sourceHash }));
+    await atomicWrite(path.join(this.directory, asset.filename), input.bytes);
     return asset;
   }
 
-  async saveCustomer(input: { ownerId: string; image: Awaited<ReturnType<typeof normalizeImage>>; consent: Consent }): Promise<AssetRecord> {
+  async saveCustomer(input: { ownerId: string; image: Awaited<ReturnType<typeof normalizeImage>>; consent: Consent; id?: string }): Promise<AssetRecord> {
     consentSchema.parse(input.consent);
     return this.persist({
       ownerId: input.ownerId, jobId: null, kind: "customer", mime: "image/jpeg", ...input.image,
-    }, randomUUID(), input.consent, createHash("sha256").update(input.image.bytes).digest("hex"));
+    }, input.id ?? randomUUID(), input.consent, createHash("sha256").update(input.image.bytes).digest("hex"));
   }
 
   async saveProduct(bytes: Uint8Array): Promise<AssetRecord> {
@@ -138,6 +139,11 @@ export class LocalMediaRepository implements MediaRepository {
     const asset = await this.requireOwned(id, ownerId);
     if (asset.ownerId === PRODUCT_OWNER) return;
     await rm(path.join(this.directory, asset.filename), { force: true });
+    for (const name of await readdir(this.directory)) {
+      if ((name.startsWith(`${id}.media.`) || name.startsWith(`${id}.json.`)) && name.endsWith(".writing")) {
+        await rm(path.join(this.directory, name), { force: true });
+      }
+    }
     await rm(this.metadataPath(id), { force: true });
   }
 }

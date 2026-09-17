@@ -75,6 +75,9 @@ function fixture(enableHero = false) {
   };
   return {
     services, stages, warnings, checkpoints, result, job, plan, frames, get videoCalls() { return videoCalls; },
+    selectHeroEndpoints: () => {
+      job.heroEndpoints = { startAssetId: frames[0].assetId, endAssetId: frames.at(-1)!.assetId };
+    },
     run: () => executeMovie(job, context, async patch => { checkpoints.push(patch); },
       { dataDir: "unused", imageModel: "test", veoModel: "test" }, services),
   };
@@ -93,6 +96,16 @@ test("optional video failure still renders a truthful baseline", async () => {
   assert.equal(sample.videoCalls, 1);
   assert.equal(sample.warnings.length, 1);
   assert.deepEqual(sample.checkpoints.at(-1), { hero: null });
+});
+test("required Veo pauses after storyboard approval until distinct hero endpoints are selected", async () => {
+  const sample = fixture(true);
+  sample.job.request.video_provider = "google-veo";
+  sample.job.request.render_layout = "video-bookends";
+  sample.job.request.movie_duration_seconds = 15;
+  sample.plan.videoProvider = "google-veo";
+  await assert.rejects(sample.run(), (error: unknown) =>
+    error instanceof MovieError && error.code === "HERO_ENDPOINT_SELECTION_REQUIRED");
+  assert.equal(sample.videoCalls, 0, "endpoint selection pauses before the paid video provider");
 });
 test("renderer preflight fails before a paid reference service runs", async () => {
   const sample = fixture();
@@ -149,6 +162,7 @@ test("explicit Veo selection fails rather than completing a slideshow when anima
   const sample = fixture(true);
   sample.job.request.video_provider = "google-veo";
   sample.plan.videoProvider = "google-veo";
+  sample.selectHeroEndpoints();
   sample.services.renderer.render = async () => assert.fail("Required animation must not fall back to stills");
   await assert.rejects(sample.run(), (error: unknown) => error instanceof MovieError && error.code === "ANIMATION_REQUIRED");
 });
@@ -157,6 +171,7 @@ test("explicit Veo selection combines an actual provider clip with approved stil
   const sample = fixture(true);
   sample.job.request.video_provider = "google-veo";
   sample.plan.videoProvider = "google-veo";
+  sample.selectHeroEndpoints();
   const clip = { assetId: randomUUID(), shotId: "shot_03" as const, provider: "Google Veo" as const, model: "veo-3.1-generate-preview" };
   sample.services.video.generate = async () => clip;
   sample.services.renderer.render = async input => {
@@ -189,6 +204,7 @@ test("both video providers pass the explicit bookend layout to final assembly", 
     sample.job.request.video_provider = provider;
     sample.job.request.render_layout = "video-bookends";
     sample.plan.videoProvider = provider;
+    if (provider === "google-veo") sample.selectHeroEndpoints();
     sample.services.video.generate = async () => ({
       assetId: randomUUID(), shotId: "shot_03", provider: provider === "google-veo" ? "Google Veo" : "OpenAI Sora",
       model: "offline-test",
@@ -210,6 +226,7 @@ test("bookend requests cannot silently receive the older storyboard-layout movie
   sample.job.request.video_provider = "google-veo";
   sample.job.request.render_layout = "video-bookends";
   sample.plan.videoProvider = "google-veo";
+  sample.selectHeroEndpoints();
   sample.services.video.generate = async () => ({ assetId: randomUUID(), shotId: "shot_03", provider: "Google Veo", model: "offline-test" });
   sample.services.renderer.render = async () => ({ ...sample.result, mode: "hybrid-video" });
   await assert.rejects(sample.run(), (error: unknown) => error instanceof MovieError && error.code === "RENDER_INVALID_OUTPUT");
@@ -219,6 +236,7 @@ test("endpoint preparation failure does not mark Veo as submitted, but the provi
   const sample = fixture(true);
   sample.job.request.video_provider = "google-veo";
   sample.plan.videoProvider = "google-veo";
+  sample.selectHeroEndpoints();
   sample.services.video.generate = async (_input, context) => {
     assert.ok(context.beforeVideoSubmission);
     throw new MovieError("CONTINUITY_REJECTED", "Missing end frame.");
@@ -256,6 +274,7 @@ test("longer movie lengths route through a complete animation sequence, not stre
     sample.job.request.render_layout = "video-bookends";
     sample.job.request.movie_duration_seconds = duration;
     sample.plan.videoProvider = "google-veo";
+    sample.selectHeroEndpoints();
     const clips = Array.from({ length: duration === 28 ? 3 : 2 }, () => ({
       assetId: randomUUID(), shotId: "shot_03" as const, provider: "Google Veo" as const, model: "offline-test",
     }));
@@ -280,6 +299,7 @@ test("the 13-second preset retains a full single eight-second clip", async () =>
   sample.job.request.render_layout = "video-bookends";
   sample.job.request.movie_duration_seconds = 13;
   sample.plan.videoProvider = "google-veo";
+  sample.selectHeroEndpoints();
   sample.services.video.generate = async () => ({ assetId: randomUUID(), shotId: "shot_03", provider: "Google Veo", model: "offline-test" });
   sample.services.renderer.render = async input => {
     assert.equal(input.movieDurationSeconds, 13);

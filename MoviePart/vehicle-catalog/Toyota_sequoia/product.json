@@ -1,0 +1,22 @@
+{
+  "id": "toyota-sequoia",
+  "version": 1,
+  "name": "Toyota Sequoia",
+  "make": "Toyota",
+  "model": "Sequoia",
+  "exteriorColor": "As photographed",
+  "interiorColor": null,
+  "appearance": "The exact Toyota Sequoia shown in the supplied exterior and interior photographs. Preserve its body generation, lights, grille, wheels, paint, cabin and trim; do not substitute another model or configuration.",
+  "approvedClaims": [],
+  "usagePermission": "Exterior photo by HJUdall, licensed CC0 1.0, source: https://commons.wikimedia.org/wiki/File:24_Toyota_Sequoia_TRD_Pro.jpg. Interior photo by Deathpallie325, licensed CC BY 4.0, source: https://commons.wikimedia.org/wiki/File:2024_Toyota_Sequoia_interior.jpg.",
+  "images": [
+    {
+      "file": "exterior.jpg",
+      "role": "front_three_quarter"
+    },
+    {
+      "file": "interior.jpg",
+      "role": "interior"
+    }
+  ]
+}

@@ -426,7 +426,8 @@ test("durable receipts reconcile after a post-insert save failure and fresh serv
       await disk.save(record);
     },
   };
-  await assert.rejects(fake.service(failingStore).confirm(confirmed()), failure("CALENDAR_STORAGE_FAILED"));
+  await assert.rejects(fake.service(failingStore).confirm(confirmed()), failure("CALENDAR_STORAGE_FAILED", true));
+  assert.equal((await disk.load(confirmationKey("confirm-test-001")))?.state, "pending");
   const receipt = await fake.service(new FileCalendarReceiptStore(directory)).confirm(confirmed());
   assert.equal(receipt.status, "created");
   assert.equal(fake.count("POST"), 1);
@@ -446,6 +447,25 @@ test("receipt corruption and storage failure stop creation rather than silently 
   await assert.rejects(fake.service(new FileCalendarReceiptStore(directory)).confirm(confirmed()), failure("CALENDAR_STORAGE_FAILED"));
   assert.equal(fake.calls.length, 0);
   assert.throws(() => new FileCalendarReceiptStore("relative-path"), failure("CALENDAR_STORAGE_INVALID"));
+});
+
+test("receipt write failures before insert or delete do not claim uncertain remote mutations", async () => {
+  const fake = new FakeCalendar();
+  const receipts = new MemoryReceipts();
+  const save = receipts.save.bind(receipts);
+  let blockedState: CalendarReceiptRecord["state"] = "pending";
+  receipts.save = async record => {
+    if (record.state === blockedState) throw new CalendarError("CALENDAR_STORAGE_FAILED", "Storage unavailable.", 503);
+    await save(record);
+  };
+  await assert.rejects(fake.service(receipts).confirm(confirmed()), failure("CALENDAR_STORAGE_FAILED", false));
+  assert.equal(fake.calls.length, 0);
+  blockedState = "cancelling";
+  await fake.service(receipts).confirm(confirmed());
+  await assert.rejects(fake.service(receipts).cancel({ confirmed: true, confirmationId: "confirm-test-001" }), failure("CALENDAR_STORAGE_FAILED", false));
+  assert.equal(fake.count("DELETE"), 0);
+  assert.equal(fake.events.size, 1);
+  assert.equal(receipts.values.get(confirmationKey("confirm-test-001"))?.state, "created");
 });
 
 test("normal service disposal/session-photo cleanup has no calendar cancellation effect", async () => {
@@ -483,6 +503,37 @@ test("explicit owned cancellation sends updates and survives duplicate requests/
   const restarted = fake.service(new FileCalendarReceiptStore(directory));
   assert.deepEqual(await restarted.cancel({ confirmed: true, confirmationId: "confirm-test-001" }), cancelled);
   await assert.rejects(restarted.confirm(confirmed()), failure("CALENDAR_BOOKING_CANCELLED"));
+  assert.equal(fake.count("DELETE"), 1);
+  assert.equal(fake.count("POST"), 1);
+});
+
+test("post-delete receipt failure remains uncertain and recovers without a second cancellation", async t => {
+  const directory = await privateDirectory(t);
+  const disk = new FileCalendarReceiptStore(directory);
+  const fake = new FakeCalendar();
+  await fake.service(disk).confirm(confirmed());
+  const failingStore: CalendarReceiptStore = {
+    load: key => disk.load(key),
+    save: async record => {
+      if (record.state === "cancelled") throw new Error("private-path-or-storage-diagnostics");
+      await disk.save(record);
+    },
+  };
+  const cancellation = { confirmed: true as const, confirmationId: "confirm-test-001" };
+  await assert.rejects(fake.service(failingStore).cancel(cancellation), (error: unknown) => {
+    assert.ok(error instanceof CalendarError);
+    assert.equal(error.code, "CALENDAR_STORAGE_FAILED");
+    assert.equal(error.acceptanceUncertain, true);
+    assert.doesNotMatch(error.message, /private-path|diagnostics/);
+    return true;
+  });
+  assert.equal(fake.count("DELETE"), 1);
+  assert.equal(fake.events.size, 0);
+  assert.equal((await disk.load(confirmationKey(cancellation.confirmationId)))?.state, "cancelling");
+  const recovered = await fake.service(new FileCalendarReceiptStore(directory)).cancel(cancellation);
+  assert.equal(recovered.status, "cancelled");
+  assert.equal(recovered.cancellationUpdatesRequested, true);
+  assert.deepEqual(await fake.service(disk).cancel(cancellation), recovered);
   assert.equal(fake.count("DELETE"), 1);
   assert.equal(fake.count("POST"), 1);
 });

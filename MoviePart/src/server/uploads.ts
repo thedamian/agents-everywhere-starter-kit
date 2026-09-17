@@ -29,7 +29,7 @@ export async function boundedBody(request: Request, limit: number): Promise<Uint
   return result;
 }
 
-export async function uploadPhotos(request: Request, ownerId: string, media: LocalMediaRepository): Promise<AssetRecord[]> {
+export async function parsePhotos(request: Request) {
   if (!request.headers.get("content-type")?.toLowerCase().startsWith("multipart/form-data;")) {
     throw new MovieError("INVALID_UPLOAD", "Send multipart/form-data with photos and consent.", 415);
   }
@@ -67,6 +67,11 @@ export async function uploadPhotos(request: Request, ownerId: string, media: Loc
     unique.add(hash);
     images.push(image);
   }
+  return { images, consent };
+}
+
+export async function uploadPhotos(request: Request, ownerId: string, media: LocalMediaRepository): Promise<AssetRecord[]> {
+  const { images, consent } = await parsePhotos(request);
   const assets: AssetRecord[] = [];
   try {
     for (const image of images) assets.push(await media.saveCustomer({ ownerId, image, consent }));

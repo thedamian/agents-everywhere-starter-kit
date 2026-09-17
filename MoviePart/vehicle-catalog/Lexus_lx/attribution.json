@@ -1,0 +1,21 @@
+{
+  "displayName": "Lexus LX",
+  "make": "Lexus",
+  "model": "LX",
+  "exterior": {
+    "filename": "exterior.jpg",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:Lexus_LX_600_VJA310_Ultra_Luxury_Sonic_Quartz_01.jpg",
+    "directUrl": "https://upload.wikimedia.org/wikipedia/commons/9/97/Lexus_LX_600_VJA310_Ultra_Luxury_Sonic_Quartz_01.jpg",
+    "license": "CC BY-SA 4.0",
+    "author": "Ethan Llamas",
+    "transformation": "Wikimedia Commons thumbnail service scaled the source image to 1920x1280 pixels after the direct URL was rate-limited; no local pixel transformation was applied."
+  },
+  "interior": {
+    "filename": "interior.jpg",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:LEXUS_LX_600_ULTRA_LUXURY_(J310)_INTERIOR.jpg",
+    "directUrl": "https://upload.wikimedia.org/wikipedia/commons/1/16/LEXUS_LX_600_ULTRA_LUXURY_%28J310%29_INTERIOR.jpg",
+    "license": "CC BY-SA 4.0",
+    "author": "Dinkun Chen",
+    "transformation": "Wikimedia Commons thumbnail service scaled the source image to 1920x1281 pixels after the direct URL was rate-limited; no local pixel transformation was applied."
+  }
+}

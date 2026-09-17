@@ -10,7 +10,7 @@ test('operator capability is loopback Windows Chrome only', () => {
   assert.equal(isLocalWindowsOperator({ hostname: 'kiosk.example', protocol: 'https:' }, windows), false);
   assert.equal(isLocalWindowsOperator({ hostname: '192.168.1.10', protocol: 'https:' }, windows), false);
   assert.equal(isLocalWindowsOperator({ hostname: '127.0.0.1', protocol: 'file:' }, windows), false);
-  assert.equal(isLocalWindowsOperator({ hostname: '127.0.0.1', protocol: 'http:' }, 'iPad Safari/605.1'), false);
+  assert.equal(isLocalWindowsOperator({ hostname: '127.0.0.1', protocol: 'http:' }, 'Mobile Safari/605.1'), false);
   assert.equal(isLocalWindowsOperator({ hostname: '127.0.0.1', protocol: 'http:' }, 'Linux Chrome/132.0.0.0'), false);
 });
 

@@ -6,11 +6,11 @@ Customer photos can stay in ignored `demo-data\customer-01` or another private f
 
 ## Car catalog
 
-The creator studio offers **Tesla Model Y** (`tesla-model-y`) and **Toyota Tundra Hybrid** (`toyota-tundra-hybrid`). Select either car and use **Add car references** to upload an exterior and interior photograph of the same actual model/trim. Enter the actual colors, source and permission. Neither option is marked ready until its own reference pack exists.
+The creator studio offers Toyota and Lexus vehicles only. The supported lineup includes Toyota 4Runner, bZ, Camry, Corolla, Corolla Cross, Crown, Crown Signia, GR86, GR Corolla, GR Supra, Highlander, Land Cruiser, Mirai, Prius, RAV4, Sequoia, Sienna, Tacoma and Tundra, plus Lexus ES, GX, IS, LC, LS, LX, NX, RC, RX, RZ and UX.
 
-This upload stores separate private packs in `.movie-data\catalog\tesla-model-y` and `.movie-data\catalog\toyota-tundra-hybrid`. The application does not silently substitute Tesla Model S, invent a model year, or reuse one vehicle's cabin for the other.
+Select a car directly in **02 Choose your car**. Each supported choice uses its checked-in, coherent exterior/interior reference pair, so customers and operators do not upload car photographs.
 
-No manufacturer photographs are bundled. Official press-gallery access does not by itself grant advertising or generative reuse permission. Use your own authorized photographs or assets licensed for this purpose.
+The checked-in `vehicle-catalog` directory contains only images whose source metadata records an explicit reusable license. For advertising or generative use, operators must still confirm that the recorded license and any attribution/share-alike requirements fit the intended production. Official press-gallery access or public web visibility alone is not permission. A private operator pack under `.movie-data\catalog\<product-id>` may override a bundled pack for an exact trim or campaign.
 
 For operator-managed catalog files instead of the UI:
 
@@ -37,7 +37,5 @@ Place a permitted, coherent vehicle reference set under `.movie-data\catalog` (o
 ```
 
 Use two to eight unique images, including an interior reference, and plain filenames within the catalog folder. Do not copy the illustrative permission sentence as a substitute for real permission.
-
-Tiya's source prototype named a Tesla Model S and included performance claims. Those claims and trim assumptions are deliberately not installed as verified catalog data. If using a Tesla, supply the exact car's images and independently approved metadata.
 
 The `demo-car-v1` synthetic concept in Dwight's orchestrator is a separate media-service contract. It does not implicitly refer to this studio's real car catalog.

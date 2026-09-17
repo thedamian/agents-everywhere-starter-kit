@@ -1,0 +1,22 @@
+{
+  "id": "lexus-is",
+  "version": 1,
+  "name": "Lexus IS",
+  "make": "Lexus",
+  "model": "IS",
+  "exteriorColor": "As photographed",
+  "interiorColor": null,
+  "appearance": "The exact Lexus IS shown in the supplied exterior and interior photographs. Preserve its body generation, lights, grille, wheels, paint, cabin and trim; do not substitute another model or configuration.",
+  "approvedClaims": [],
+  "usagePermission": "Exterior photo by Kevauto, licensed CC BY-SA 4.0, source: https://commons.wikimedia.org/wiki/File:2021_Lexus_IS_300_AWD,_front_3.26.21.jpg. Interior photo by Tokumeigakarinoaoshima, licensed CC0, source: https://commons.wikimedia.org/wiki/File:Lexus_IS350_Ver.L_(GSE31)_interior.JPG.",
+  "images": [
+    {
+      "file": "exterior.jpg",
+      "role": "front_three_quarter"
+    },
+    {
+      "file": "interior.jpg",
+      "role": "interior"
+    }
+  ]
+}

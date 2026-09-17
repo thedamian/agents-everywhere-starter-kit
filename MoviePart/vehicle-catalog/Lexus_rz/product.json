@@ -1,0 +1,22 @@
+{
+  "id": "lexus-rz",
+  "version": 1,
+  "name": "Lexus RZ (BEV)",
+  "make": "Lexus",
+  "model": "RZ (BEV)",
+  "exteriorColor": "As photographed",
+  "interiorColor": null,
+  "appearance": "The exact Lexus RZ (BEV) shown in the supplied exterior and interior photographs. Preserve its body generation, lights, grille, wheels, paint, cabin and trim; do not substitute another model or configuration.",
+  "approvedClaims": [],
+  "usagePermission": "Exterior photo by Ethan Llamas, licensed CC BY-SA 4.0, source: https://commons.wikimedia.org/wiki/File:2024_Lexus_RZ_450e_DIRECT-4_in_Sonic_Copper,_front_right,_07-14-2024.jpg. Interior photo by Tokumeigakarinoaoshima, licensed CC BY-SA 4.0, source: https://commons.wikimedia.org/wiki/File:Lexus_RZ_450e%22F_SPORT_Performance%22_(ZAA-XEBM15-AWDLS(T))_interior.jpg.",
+  "images": [
+    {
+      "file": "exterior.jpg",
+      "role": "front_three_quarter"
+    },
+    {
+      "file": "interior.jpg",
+      "role": "interior"
+    }
+  ]
+}

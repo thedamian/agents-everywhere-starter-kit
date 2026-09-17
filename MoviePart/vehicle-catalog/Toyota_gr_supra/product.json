@@ -1,0 +1,22 @@
+{
+  "id": "toyota-gr-supra",
+  "version": 1,
+  "name": "Toyota GR Supra",
+  "make": "Toyota",
+  "model": "GR Supra",
+  "exteriorColor": "As photographed",
+  "interiorColor": null,
+  "appearance": "The exact Toyota GR Supra shown in the supplied exterior and interior photographs. Preserve its body generation, lights, grille, wheels, paint, cabin and trim; do not substitute another model or configuration.",
+  "approvedClaims": [],
+  "usagePermission": "Exterior photo by Dietmar Rabich, licensed CC BY-SA 4.0, source: https://commons.wikimedia.org/wiki/File:D%C3%BClmen,_Auto_Bertels,_Toyota_GR_Supra_--_2021_--_9547.jpg. Interior photo by Tokumeigakarinoaoshima, licensed CC BY-SA 4.0, source: https://commons.wikimedia.org/wiki/File:The_interior_of_Toyota_GR_Supra_RZ_(3BA-DB42-ZRRW).jpg.",
+  "images": [
+    {
+      "file": "exterior.jpg",
+      "role": "front_three_quarter"
+    },
+    {
+      "file": "interior.jpg",
+      "role": "interior"
+    }
+  ]
+}

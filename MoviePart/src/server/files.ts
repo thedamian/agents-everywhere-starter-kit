@@ -20,7 +20,14 @@ export async function atomicWrite(filename: string, content: string | Uint8Array
   try {
     const handle = await open(staging, "wx", 0o600);
     try { await handle.writeFile(content); await handle.sync(); } finally { await handle.close(); }
-    await rename(staging, filename);
+    for (let attempt = 0; ; attempt++) {
+      try { await rename(staging, filename); break; } catch (error) {
+        const code = (error as NodeJS.ErrnoException).code;
+        if (process.platform !== "win32" || !["EPERM", "EBUSY", "EACCES"].includes(code ?? "") || attempt >= 9) throw error;
+        // Windows readers/scanners may briefly hold the destination; never unlink the committed record.
+        await new Promise(resolve => setTimeout(resolve, 25 * (attempt + 1)));
+      }
+    }
   } finally { await rm(staging, { force: true }); }
 }
 

@@ -1,0 +1,22 @@
+{
+  "id": "lexus-ls",
+  "version": 1,
+  "name": "Lexus LS",
+  "make": "Lexus",
+  "model": "LS",
+  "exteriorColor": "As photographed",
+  "interiorColor": null,
+  "appearance": "The exact Lexus LS shown in the supplied exterior and interior photographs. Preserve its body generation, lights, grille, wheels, paint, cabin and trim; do not substitute another model or configuration.",
+  "approvedClaims": [],
+  "usagePermission": "Exterior photo by Ethan Llamas, licensed CC BY-SA 4.0, source: https://commons.wikimedia.org/wiki/File:Lexus_LS_500h_GVF50_FL_Manganese_Luster_01.jpg. Interior photo by Tangjunwen CN, licensed CC BY-SA 4.0, source: https://commons.wikimedia.org/wiki/File:The_Interior_of_Lexus_LS500h_%22EXECUTIVE%22_CN-Spec_in_Tianhe_39_(2018-11-04).jpg.",
+  "images": [
+    {
+      "file": "exterior.jpg",
+      "role": "front_three_quarter"
+    },
+    {
+      "file": "interior.jpg",
+      "role": "interior"
+    }
+  ]
+}

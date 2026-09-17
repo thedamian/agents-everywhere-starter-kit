@@ -1,0 +1,22 @@
+{
+  "id": "toyota-highlander",
+  "version": 1,
+  "name": "Toyota Highlander",
+  "make": "Toyota",
+  "model": "Highlander",
+  "exteriorColor": "As photographed",
+  "interiorColor": null,
+  "appearance": "The exact Toyota Highlander shown in the supplied exterior and interior photographs. Preserve its body generation, lights, grille, wheels, paint, cabin and trim; do not substitute another model or configuration.",
+  "approvedClaims": [],
+  "usagePermission": "Exterior photo by Benespit, licensed CC BY-SA 4.0, source: https://commons.wikimedia.org/wiki/File:24_Toyota_Highlander_Hybrid_(XU70)_1.jpg. Interior photo by Baron Maddock, licensed CC BY 4.0, source: https://commons.wikimedia.org/wiki/File:2021_Toyota_Highlander_interior.jpg.",
+  "images": [
+    {
+      "file": "exterior.jpg",
+      "role": "front_three_quarter"
+    },
+    {
+      "file": "interior.jpg",
+      "role": "interior"
+    }
+  ]
+}

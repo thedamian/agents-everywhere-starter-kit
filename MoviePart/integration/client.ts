@@ -1,6 +1,6 @@
 import type {
   ConfigView, Consent, JobResponse, JobView, MovieJobAccepted,
-  MovieJobRequest, MovieRetryAccepted, MovieRetryRequest, UploadResponse, FrameDecisionRequest,
+  MovieJobRequest, MovieRetryAccepted, MovieRetryRequest, UploadResponse, FrameDecisionRequest, HeroEndpointSelectionRequest,
 } from "./contracts";
 
 export class MovieMagicHttpError extends Error {
@@ -84,6 +84,13 @@ export class MovieMagicClient {
 
   async decideFrame(jobId: string, assetId: string, request: FrameDecisionRequest, signal?: AbortSignal): Promise<JobView> {
     const response = await this.json<JobResponse>(`/api/movie-jobs/${encodeURIComponent(jobId)}/frames/${encodeURIComponent(assetId)}/decision`, {
+      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(request), signal,
+    });
+    return response.job;
+  }
+
+  async selectHeroEndpoint(jobId: string, request: HeroEndpointSelectionRequest, signal?: AbortSignal): Promise<JobView> {
+    const response = await this.json<JobResponse>(`/api/movie-jobs/${encodeURIComponent(jobId)}/hero-endpoints`, {
       method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(request), signal,
     });
     return response.job;

@@ -1,0 +1,22 @@
+{
+  "id": "toyota-corolla",
+  "version": 1,
+  "name": "Toyota Corolla",
+  "make": "Toyota",
+  "model": "Corolla",
+  "exteriorColor": "As photographed",
+  "interiorColor": null,
+  "appearance": "The exact Toyota Corolla shown in the supplied exterior and interior photographs. Preserve its body generation, lights, grille, wheels, paint, cabin and trim; do not substitute another model or configuration.",
+  "approvedClaims": [],
+  "usagePermission": "Exterior photo by OWS Photography, licensed CC BY 4.0, source: https://commons.wikimedia.org/wiki/File:Toyota_Corolla_(E210)_Washington_DC_Metro_Area,_USA.jpg. Interior photo by Vauxford, licensed CC BY-SA 4.0, source: https://commons.wikimedia.org/wiki/File:2019_Toyota_Corolla_Hybrid_Saloon_Interior.jpg.",
+  "images": [
+    {
+      "file": "exterior.jpg",
+      "role": "front_three_quarter"
+    },
+    {
+      "file": "interior.jpg",
+      "role": "interior"
+    }
+  ]
+}

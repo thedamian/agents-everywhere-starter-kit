@@ -218,17 +218,13 @@ test('freshness boundary and inconsistent state generation fail closed', async (
 function brokerHarness() {
   const clock = new Clock(), messages: BridgeServerMessage[] = [];
   const sessionId = randomUUID();
-  let authorizedSessionId: string = sessionId;
   let active = true, motionConsent = true;
-  let failDelivery = false;
-  const broker = new BridgeBroker({ now: clock.now, sessionSafety: (id) => ({ active: active && id === authorizedSessionId, motionConsent }) });
+  const broker = new BridgeBroker({ now: clock.now, sessionSafety: (id) => ({ active: active && id === sessionId, motionConsent }) });
   const pairing = broker.register({ label: 'Local test', platform: 'windows-chrome' });
   const operatorPairing = broker.operatorPairing(pairing.bridgeId);
   const bridge = broker.pair(pairing.bridgeId, pairing.pairingCode);
   const operator = broker.pairOperator(pairing.bridgeId, operatorPairing.operatorCode);
-  const disconnect = broker.connect(pairing.bridgeId, bridge.bridgeToken, {
-    send: (message) => { if (failDelivery) throw new Error('Mock transport loss'); messages.push(message); }, close() {},
-  });
+  const disconnect = broker.connect(pairing.bridgeId, bridge.bridgeToken, { send: (message) => messages.push(message), close() {} });
   function heartbeat(control: BridgeLease | null = null) {
     broker.heartbeat(bridge.bridgeId, { leaseId: control?.leaseId ?? null, leaseGeneration: broker.status(bridge.bridgeId).leaseGeneration,
       lastSequence: messages.filter((message) => message.type === 'command').at(-1)?.command.sequence ?? 0,
@@ -242,9 +238,7 @@ function brokerHarness() {
     return control;
   }
   return { clock, broker, sessionId, bridge, operator, pairing, messages, disconnect, heartbeat, arm,
-    consent: (value: boolean) => { motionConsent = value; }, active: (value: boolean) => { active = value; },
-    failDelivery: () => { failDelivery = true; },
-    selectSession: (value: string) => { authorizedSessionId = value; } };
+    consent: (value: boolean) => { motionConsent = value; }, active: (value: boolean) => { active = value; } };
 }
 
 test('broker role codes are single-use, scoped, expiring, and cannot interchange lease/control roles', async () => {
@@ -308,16 +302,6 @@ test('broker rejects stale tracking, missing consent, cooldown and lease loss; w
   h.broker.close();
 });
 
-test('transport delivery failure reports unconfirmed failure and disarms instead of returning a successful permit', async () => {
-  const h = brokerHarness(), control = await h.arm();
-  h.failDelivery();
-  await assert.rejects(h.broker.authorizeMotion(h.sessionId, { intent: 'reverse_for_half_body', speed: 'low', pulseMs: 250,
-    leaseId: control.leaseId, leaseGeneration: control.generation, tracking: tracking(h.clock) }), /delivery is unconfirmed/);
-  assert.equal(h.broker.status(h.bridge.bridgeId).armed, false);
-  assert.equal(h.broker.status(h.bridge.bridgeId).connected, false);
-  h.broker.close();
-});
-
 test('broker caps cannot be reset by Stop, rearming, credential renewal or reconnect', async () => {
   const h = brokerHarness();
   for (let pulse = 0; pulse < 4; pulse++) {
@@ -358,28 +342,9 @@ test('unknown/mismatched/duplicate acknowledgements never become physical succes
     leaseGeneration: permit.leaseGeneration, sequence: permit.sequence, status: 'stop_written', reason: 'stop',
     physicalExecution: 'unverified', at: h.clock.now() };
   assert.throws(() => h.broker.acknowledge(h.bridge.bridgeId, { ...acknowledgement, commandId: randomUUID() }), /issued command/);
-  assert.throws(() => h.broker.acknowledge(h.bridge.bridgeId, { ...acknowledgement, at: h.clock.now() + 1001 }), /time/);
   assert.throws(() => h.broker.acknowledge(h.bridge.bridgeId, { ...acknowledgement, physicalExecution: 'confirmed' }));
   h.broker.acknowledge(h.bridge.bridgeId, acknowledgement);
   assert.throws(() => h.broker.acknowledge(h.bridge.bridgeId, acknowledgement), /terminal/);
-  h.broker.close();
-});
-
-test('rebinding a bridge never exposes the prior kiosk acknowledgement as the new kiosk Stop result', async () => {
-  const h = brokerHarness(), control = await h.arm();
-  const permit = await h.broker.authorizeMotion(h.sessionId, { intent: 'reverse_for_half_body', speed: 'low', pulseMs: 250,
-    leaseId: control.leaseId, leaseGeneration: control.generation, tracking: tracking(h.clock) });
-  h.broker.acknowledge(h.bridge.bridgeId, { commandId: permit.commandId, leaseId: permit.leaseId,
-    leaseGeneration: permit.leaseGeneration, sequence: permit.sequence, status: 'stop_written',
-    physicalExecution: 'unverified', reason: 'stop', at: h.clock.now() });
-  h.broker.stopSession(h.sessionId, 'session_ended');
-  const nextSession = randomUUID();
-  h.selectSession(nextSession);
-  h.heartbeat();
-  await h.broker.lease(h.bridge.bridgeId, { eventId: randomUUID(), sessionId: nextSession,
-    expectedGeneration: h.broker.status(h.bridge.bridgeId).leaseGeneration, operatorArmed: true, rearClearanceConfirmed: true });
-  assert.equal(h.broker.sessionState(nextSession).acknowledgement, null);
-  assert.equal(h.broker.sessionState(h.sessionId).bridge, null);
   h.broker.close();
 });
 

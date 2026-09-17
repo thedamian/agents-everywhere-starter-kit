@@ -1,0 +1,22 @@
+{
+  "id": "toyota-gr-corolla",
+  "version": 1,
+  "name": "Toyota GR Corolla",
+  "make": "Toyota",
+  "model": "GR Corolla",
+  "exteriorColor": "As photographed",
+  "interiorColor": null,
+  "appearance": "The exact Toyota GR Corolla shown in the supplied exterior and interior photographs. Preserve its body generation, lights, grille, wheels, paint, cabin and trim; do not substitute another model or configuration.",
+  "approvedClaims": [],
+  "usagePermission": "Exterior photo by Artaxerxes, licensed CC BY 4.0, source: https://commons.wikimedia.org/wiki/File:Toyota_GR_Corolla_Court_Street_downtown_Keene_NH_September_2024_01.jpg. Interior photo by Tokumeigakarinoaoshima, licensed CC BY-SA 4.0, source: https://commons.wikimedia.org/wiki/File:Toyota_GR_COROLLA_RZ_(3BA-GZEA14H-BHFRZ)_interior.jpg.",
+  "images": [
+    {
+      "file": "exterior.jpg",
+      "role": "front_three_quarter"
+    },
+    {
+      "file": "interior.jpg",
+      "role": "interior"
+    }
+  ]
+}

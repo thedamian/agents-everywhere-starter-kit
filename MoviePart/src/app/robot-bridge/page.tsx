@@ -21,6 +21,16 @@ export default function RobotBridgePage() {
     controller.current = instance;
     return () => { controller.current = null; void instance.close(); };
   }, [apiPort]);
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const nextApiPort = Number(params.get('apiPort') ?? '');
+    if (Number.isInteger(nextApiPort) && nextApiPort >= 1024 && nextApiPort <= 65535) {
+      setApiPort(nextApiPort);
+      setPortDraft(String(nextApiPort));
+    }
+    const nextSessionId = params.get('sessionId');
+    if (nextSessionId && /^[0-9a-f-]{36}$/i.test(nextSessionId)) setSessionId(nextSessionId);
+  }, []);
   useEffect(() => { if (!state?.armed) setRearClear(false); }, [state?.armed]);
 
   const act = (operation: (instance: OperatorBridgeController) => Promise<void>) => {

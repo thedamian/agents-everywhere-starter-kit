@@ -1,0 +1,21 @@
+{
+  "displayName": "Toyota GR Corolla",
+  "make": "Toyota",
+  "model": "GR Corolla",
+  "exterior": {
+    "filename": "exterior.jpg",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:Toyota_GR_Corolla_Court_Street_downtown_Keene_NH_September_2024_01.jpg",
+    "directUrl": "https://upload.wikimedia.org/wikipedia/commons/3/37/Toyota_GR_Corolla_Court_Street_downtown_Keene_NH_September_2024_01.jpg",
+    "license": "CC BY 4.0",
+    "author": "Artaxerxes",
+    "transformation": "Wikimedia Commons thumbnail service scaled the source image to 1920x2560 pixels after the direct URL was rate-limited; no local pixel transformation was applied."
+  },
+  "interior": {
+    "filename": "interior.jpg",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:Toyota_GR_COROLLA_RZ_(3BA-GZEA14H-BHFRZ)_interior.jpg",
+    "directUrl": "https://upload.wikimedia.org/wikipedia/commons/4/4b/Toyota_GR_COROLLA_RZ_%283BA-GZEA14H-BHFRZ%29_interior.jpg",
+    "license": "CC BY-SA 4.0",
+    "author": "Tokumeigakarinoaoshima",
+    "transformation": "Wikimedia Commons thumbnail service scaled the source image to 1920x1440 pixels after the direct URL was rate-limited; no local pixel transformation was applied."
+  }
+}

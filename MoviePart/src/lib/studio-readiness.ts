@@ -3,10 +3,9 @@ import { vehicleChoices } from "../catalog/vehicles";
 
 export function selectableProducts(config: ConfigView | null): ConfigView["products"] {
   const configured = new Map(config?.products.map(product => [product.id, product]) ?? []);
-  const products = vehicleChoices.map(choice => configured.get(choice.id) ?? {
+  return vehicleChoices.map(choice => configured.get(choice.id) ?? {
     id: choice.id, name: choice.name, ready: false,
   });
-  return [...products, ...(config?.products.filter(product => !vehicleChoices.some(choice => choice.id === product.id)) ?? [])];
 }
 
 export function creationBlockers(input: {
@@ -14,9 +13,9 @@ export function creationBlockers(input: {
   photoCount: number; generationConsent: boolean; personalizationConsent: boolean;
 }): string[] {
   const blockers: string[] = [];
-  if (!input.productId) blockers.push("Choose Tesla Model Y or Toyota Tundra Hybrid.");
+  if (!input.productId) blockers.push("Choose a Toyota or Lexus vehicle.");
   else if (!input.config?.products.some(product => product.id === input.productId && product.ready)) {
-    blockers.push("Add permitted exterior and interior reference photos for your selected car, then save the reference pack.");
+    blockers.push("The selected Toyota or Lexus catalog vehicle is temporarily unavailable.");
   }
   if (input.needsPhotos && !input.photoCount) blockers.push("Add a customer photo, or select First-person or Personalized mode.");
   if (!input.generationConsent) blockers.push("Confirm permission for the selected generation mode.");

@@ -1,0 +1,21 @@
+{
+  "displayName": "Toyota Mirai",
+  "make": "Toyota",
+  "model": "Mirai",
+  "exterior": {
+    "filename": "exterior.jpg",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:Toyota_Mirai_(JPD20)_IMG_5303.jpg",
+    "directUrl": "https://upload.wikimedia.org/wikipedia/commons/6/6e/Toyota_Mirai_%28JPD20%29_IMG_5303.jpg",
+    "license": "CC BY-SA 4.0",
+    "author": "Alexander Migl",
+    "transformation": "Wikimedia Commons thumbnail service scaled the source image to 1920x980 pixels after the direct URL was rate-limited; no local pixel transformation was applied."
+  },
+  "interior": {
+    "filename": "interior.jpg",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:The_interior_of_Toyota_MIRAI_Z_Executive_Package_(ZBA-JPD20-CEDHS(E))_with_factory-installed_option.jpg",
+    "directUrl": "https://upload.wikimedia.org/wikipedia/commons/9/9b/The_interior_of_Toyota_MIRAI_Z_Executive_Package_%28ZBA-JPD20-CEDHS%28E%29%29_with_factory-installed_option.jpg",
+    "license": "CC BY-SA 4.0",
+    "author": "Tokumeigakarinoaoshima",
+    "transformation": "Wikimedia Commons thumbnail service scaled the source image to 1920x1440 pixels after the direct URL was rate-limited; no local pixel transformation was applied."
+  }
+}

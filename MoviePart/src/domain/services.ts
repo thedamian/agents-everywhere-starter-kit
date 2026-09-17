@@ -65,6 +65,7 @@ export interface VideoService {
   generate(input: {
     plan: MoviePlan; character: CharacterReference; product: ProductReference; frames: StoryboardFrame[]; operationId?: string;
     continuation?: { assetId: string; index: number; count: number };
+    heroEndpoints?: { startAssetId: string; endAssetId: string };
   }, context: GenerationContext): Promise<VideoArtifact | null>;
 }
 export interface RendererService {

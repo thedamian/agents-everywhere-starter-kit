@@ -13,10 +13,10 @@
     "dev": "node --env-file-if-exists=.env --import tsx src/server.ts",
     "start": "node --env-file-if-exists=.env dist/server.js",
     "typecheck": "tsc --noEmit",
-    "build": "tsc -p tsconfig.build.json",
+    "build": "node scripts/build.mjs",
     "test": "node scripts/tests.mjs",
     "smoke": "node scripts/smoke.mjs",
-    "verify": "npm run typecheck && npm test && npm run interfaces:check && npm run build && npm run smoke",
+    "verify": "npm run typecheck && npm test && npm --prefix ../packages/showroom-runtime test && npm run interfaces:check && npm run build && npm run smoke",
     "package:demo": "node scripts/package.mjs",
     "interfaces:export": "node --import tsx scripts/export-interfaces.mjs && node --import tsx scripts/export-interfaces.mjs --showroom",
     "interfaces:check": "node --import tsx scripts/export-interfaces.mjs --check && node --import tsx scripts/export-interfaces.mjs --showroom --check",
@@ -25,12 +25,17 @@
     "test:moviepart": "node --import ./scripts/offline-network-guard.mjs --import tsx --test integration-tests/moviepart.test.mjs"
   },
   "dependencies": {
+    "@magicpitch/showroom-runtime": "file:../packages/showroom-runtime",
     "@hono/node-server": "1.19.17",
+    "ffprobe-static": "^3.1.0",
     "hono": "4.13.7",
+    "sharp": "^0.34.0",
+    "ws": "^8.18.3",
     "zod": "4.5.4"
   },
   "devDependencies": {
     "@types/node": "24.10.1",
+    "@types/ws": "^8.18.1",
     "tsx": "4.23.13",
     "typescript": "5.9.3"
   },

@@ -1,0 +1,21 @@
+{
+  "displayName": "Toyota Corolla Cross",
+  "make": "Toyota",
+  "model": "Corolla Cross",
+  "exterior": {
+    "filename": "exterior.jpg",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:2023_Toyota_Corolla_Cross_XLE_4WD_in_Wind_Chill_Pearl,_front_left.jpg",
+    "directUrl": "https://upload.wikimedia.org/wikipedia/commons/4/43/2023_Toyota_Corolla_Cross_XLE_4WD_in_Wind_Chill_Pearl%2C_front_left.jpg",
+    "license": "CC BY-SA 3.0",
+    "author": "Mr.choppers",
+    "transformation": "Wikimedia Commons thumbnail service scaled the source image to 1920x1199 pixels after the direct URL was rate-limited; no local pixel transformation was applied."
+  },
+  "interior": {
+    "filename": "interior.jpg",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:2020_Toyota_Corolla_Cross_1.8_ZSG10R_interior_(20201113).jpg",
+    "directUrl": "https://upload.wikimedia.org/wikipedia/commons/8/8b/2020_Toyota_Corolla_Cross_1.8_ZSG10R_interior_%2820201113%29.jpg",
+    "license": "CC BY-SA 4.0",
+    "author": "オーバードライブ83",
+    "transformation": "Wikimedia Commons thumbnail service scaled the source image to 1920x1440 pixels after the direct URL was rate-limited; no local pixel transformation was applied."
+  }
+}

@@ -9,26 +9,26 @@ REFERENCE_IMAGES (attach actual files; all paths relative to MoviePart):
 person/face.jpg
 person/full_body_front.jpg
 person/half_body.jpg
-Tesla_model_3/2022_tesla_model-3_sedan_performance_s_oem_1_1600x1067.jpg
-Tesla_model_3/2022_tesla_model-3_sedan_performance_rq_oem_1_1600x1067.jpg
-Tesla_model_3/2022_tesla_model-3_sedan_performance_fq_oem_7_1600x1067.jpg
-Tesla_model_3/2022_tesla_model-3_sedan_performance_fq_oem_2_1600x1067.jpg
-Tesla_model_3/Tesla_model_3_interior_driver_side.png
+vehicle-catalog/Toyota_tundra/exterior.jpg
+vehicle-catalog/Toyota_tundra/exterior.jpg
+vehicle-catalog/Toyota_tundra/exterior.jpg
+vehicle-catalog/Toyota_tundra/exterior.jpg
+vehicle-catalog/Toyota_tundra/interior.jpg
 
 HERO IDENTITY / WARDROBE: The exact customer in person/face.jpg, not a similar-looking actor. Young adult, late teens to mid-20s, feminine presentation, medium-deep skin with warm undertone, fuller curvy build, average adult height (exact height unknown). Rounded face, full cheeks, large wide-set dark brown eyes, full lips, straight eyebrows, thin slightly winged eyeliner; no glasses or visible facial hair. Black tightly coiled braided/twisted hair just past the shoulders, center-parted as described in person.json, metallic silver tinsel woven through; preserve the actual reference identity and hairstyle. Fully buttoned white cable-knit cardigan with ribbed cuffs and hem, no visible top/undergarment, light blue denim-colored fitted trousers, thin gold necklace with small star-shaped pendant, small stud earrings, light pink/nude manicured nails. Footwear undocumented and outside the frame. full_body_front.jpg anchors build and wardrobe; half_body.jpg supplements identity.
-CAR LOCK: Same 2022-2023 pre-Highland Tesla Model 3 Performance, dual motor, Red Multi-Coat, unmistakably red even in golden light. Reference photos control shape/details only; ignore white, blue, or black paint. 20-inch dark turbine-style Performance wheels, low-profile tires, red brake calipers; full glass panoramic roof, black pillars, chrome-delete window trim; low fastback sedan, short front overhang, flush handles, subtle lower-door character line. Closed body-color nose, smooth front with lower air intakes, no grille, separate pre-Highland headlights, Tesla 'T' on the nose. Separate wraparound LED taillights and small Tesla 'T' on the trunk; no full-width light bar, no 'TESLA' wordmark on the trunk. Photo-authoritative cabin: black bolstered seats and dash/door trim, light wood-toned dash strip, round two-spoke Tesla wheel with physical scroll controls, 15-inch landscape center screen, no driver gauge cluster or decorative ambient strip. Ignore conflicting cream-seat wording in JSON.
+CAR LOCK: Use the same Toyota Tundra shown in the licensed exterior and interior references. The photographs are authoritative: preserve its body generation, grille, lights, cab, bed, wheels, paint, badges, dashboard, controls, seats and trim without mixing another configuration.
 
-SUBJECT: Full exterior of the red Tesla, the same customer clearly visible inside the driver's seat, retaining the parked pose from shot 7. Do not replace her with an anonymous silhouette or a different driver.
+SUBJECT: Full exterior of the photographed Toyota Tundra, the same customer clearly visible inside the driver's seat, retaining the parked pose from shot 7. Do not replace her with an anonymous silhouette or a different driver.
 ACTION: Camera pulls back off the car at the overlook: the first clean full-exterior hero product reveal. The exact tagline appears and branding lands over the final frame.
-CAMERA: Pull-back reveal plus slow crane up, wide 24mm. Start close enough to recognize the customer through the windshield/side window, then reveal the complete car in a front three-quarter view with wheels, body-color nose and panoramic roof legible. Keep the car uncut by the vertical frame.
+CAMERA: Pull-back reveal plus slow crane up, wide 24mm. Start close enough to recognize the customer through the windshield/side window, then reveal the complete car in a front three-quarter view matching the licensed exterior reference. Keep the car uncut by the vertical frame.
 SETTING: Same coastal overlook, parked position, headland, ocean and golden hour as shot 7.
-LIGHTING: Warm cinematic golden hour, clean highlights on red paint; do not hide product details in silhouette or excessive flare.
+LIGHTING: Warm cinematic golden hour, clean highlights on photographed paint; do not hide product details in silhouette or excessive flare.
 MOOD: Aspiration, arrival.
 STYLE: Cinematic, subtle grain, hero product shot.
-SOUND: The same continuous original instrumental cue resolves to a single clean note at the reveal, completing within 30 seconds. Near-silent car; no engine roar, dialogue, narration, or lyrics.
+SOUND: The same continuous original instrumental cue resolves to a single clean note at the reveal, completing within 30 seconds. Use restrained natural vehicle ambience; no dialogue, narration, or lyrics.
 
 TAGLINE: Your leap starts now.
-BRAND_TEXT: Tesla
-BRANDING: No dealership logo asset is present, and no dealership name is supplied. Use the known car brand 'Tesla' in clean text, not an invented dealership or a redrawn logo. This is a screen overlay only, NEVER a wordmark on the trunk. Let the tagline appear during this shot and hold it with the brand over the final frame. Use restrained, legible clean typography in clear negative space within vertical safe margins; do not cover the customer's face or car. Exact spelling and punctuation are mandatory. If Astra cannot render exact type, generate a clean plate with negative space and composite the exact text in post before marking clips/shot_08.mp4 complete. No extra end card or runtime.
-CONSISTENCY / NEGATIVES: Same face, skin tone, build, hairstyle, wardrobe, accessories, paint, wheel design and cabin as shots 1-7. No drift, extra hero, color swap, yoke, grille, rear light bar, trunk wordmark, invented dealership mark, DeLorean, film characters, film logos, copied film footage, or recognizable film score.
-QA: Inspect early/middle/late frames for reference fidelity and legible exact tagline/brand. Inspect the full product view for red paint, 20-inch dark turbine wheels, red calipers, roof, headlights and nose. Regenerate only this shot if identity or car drifts; repair overlay text separately if that is the only fault.
+BRAND_TEXT: Toyota
+BRANDING: No dealership logo asset is present, and no dealership name is supplied. Use the known car brand 'Toyota' in clean text, not an invented dealership or a redrawn logo. This is a screen overlay only, never invented physical badging. Let the tagline appear during this shot and hold it with the brand over the final frame. Use restrained, legible typography in clear negative space within vertical safe margins; do not cover the customer's face or car. Exact spelling and punctuation are mandatory. If Astra cannot render exact type, generate a clean plate with negative space and composite the exact text in post before marking clips/shot_08.mp4 complete. No extra end card or runtime.
+CONSISTENCY / NEGATIVES: Same face, skin tone, build, hairstyle, wardrobe, accessories, paint, wheel design and cabin as shots 1-7. No drift, extra hero, color swap, body-style changes, invented trim details, invented dealership mark, DeLorean, film characters, film logos, copied film footage, or recognizable film score.
+QA: Inspect early/middle/late frames for reference fidelity and legible exact tagline/brand. Inspect the full product view against the licensed exterior and interior photographs. Regenerate only this shot if identity or car drifts; repair overlay text separately if that is the only fault.

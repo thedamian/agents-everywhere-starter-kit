@@ -1,0 +1,21 @@
+{
+  "displayName": "Lexus UX",
+  "make": "Lexus",
+  "model": "UX",
+  "exterior": {
+    "filename": "exterior.jpg",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:2024_Lexus_UX_250h_in_Eminent_White_Pearl,_rear_right.jpg",
+    "directUrl": "https://upload.wikimedia.org/wikipedia/commons/1/12/2024_Lexus_UX_250h_in_Eminent_White_Pearl%2C_rear_right.jpg",
+    "license": "CC BY-SA 3.0",
+    "author": "Mr.choppers",
+    "transformation": "Wikimedia Commons thumbnail service scaled the source image to 1920x1321 pixels after the direct URL was rate-limited; no local pixel transformation was applied."
+  },
+  "interior": {
+    "filename": "interior.jpg",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:Interior_Lexus_UX300e_Expo_2022_CRI_4908.jpg",
+    "directUrl": "https://upload.wikimedia.org/wikipedia/commons/c/cb/Interior_Lexus_UX300e_Expo_2022_CRI_4908.jpg",
+    "license": "CC BY-SA 4.0",
+    "author": "Mariordo (Mario Roberto Durán Ortiz)",
+    "transformation": "Wikimedia Commons thumbnail service scaled the source image to 1920x1280 pixels after the direct URL was rate-limited; no local pixel transformation was applied."
+  }
+}

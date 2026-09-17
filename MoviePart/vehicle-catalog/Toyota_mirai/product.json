@@ -1,0 +1,22 @@
+{
+  "id": "toyota-mirai",
+  "version": 1,
+  "name": "Toyota Mirai",
+  "make": "Toyota",
+  "model": "Mirai",
+  "exteriorColor": "As photographed",
+  "interiorColor": null,
+  "appearance": "The exact Toyota Mirai shown in the supplied exterior and interior photographs. Preserve its body generation, lights, grille, wheels, paint, cabin and trim; do not substitute another model or configuration.",
+  "approvedClaims": [],
+  "usagePermission": "Exterior photo by Alexander Migl, licensed CC BY-SA 4.0, source: https://commons.wikimedia.org/wiki/File:Toyota_Mirai_(JPD20)_IMG_5303.jpg. Interior photo by Tokumeigakarinoaoshima, licensed CC BY-SA 4.0, source: https://commons.wikimedia.org/wiki/File:The_interior_of_Toyota_MIRAI_Z_Executive_Package_(ZBA-JPD20-CEDHS(E))_with_factory-installed_option.jpg.",
+  "images": [
+    {
+      "file": "exterior.jpg",
+      "role": "front_three_quarter"
+    },
+    {
+      "file": "interior.jpg",
+      "role": "interior"
+    }
+  ]
+}

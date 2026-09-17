@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { mkdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { MovieError, type JobRequest, type ProductReference } from "../src/domain";
+import { getTimeline, MovieError, type JobRequest, type ProductReference } from "../src/domain";
 import type { MovieConfig } from "../src/domain/services";
 import { JobStore } from "../src/jobs/store";
 import { MovieWorker } from "../src/jobs/worker";
@@ -119,6 +119,7 @@ test("worker persists all animation segment checkpoints and the requested output
       const asset = await media.saveAsset({
         ownerId: job.ownerId, jobId: job.id, kind: "video", mime: "video/mp4", bytes: new Uint8Array([index]),
       });
+
       const clip = { assetId: asset.id, shotId: "shot_03" as const, provider: "Google Veo" as const, model: "offline-test" };
       segments.push({ index, submitted: true, operationId, clip });
       await checkpoint({ videoSegments: [...segments], ...(index === 0 ? { hero: clip, heroAttempted: true } : {}) });
@@ -138,6 +139,57 @@ test("worker persists all animation segment checkpoints and the requested output
     assert.equal(saved.result?.durationSeconds, 28);
     assert.equal(saved.operations.length, 3);
   } finally { await worker.stop(); }
+});
+
+test("worker stops after an uncertain Veo submission without queuing a replacement", async t => {
+  const { store, media, config } = await fixture(t);
+  const input: JobRequest = {
+    ...request(), enable_hero_video: true, video_provider: "google-veo",
+    render_layout: "video-bookends", movie_duration_seconds: 13,
+  };
+  const queued = await store.create("owner", input, product());
+  const timeline = getTimeline();
+  let retryCalls = 0;
+  store.retryOwned = async (id, ownerId, recovery) => {
+    retryCalls++;
+    return { job: await store.get(id), attempt: 1 };
+  };
+  const worker = new MovieWorker(config, { store, media, execute: async (job, _context, checkpoint) => {
+    const character = {
+      id: randomUUID(), version: 1 as const, primaryAssetId: job.request.primary_reference_asset_id,
+      sourceImages: [{ assetId: job.request.customer_reference_asset_ids[0], origin: "original" as const, role: "primary" }],
+      consent, attributes: {
+        face: null, eyes: null, eyebrows: null, nose: null, mouth: null, hair: null,
+        complexion: null, visibleProportions: null, wardrobe: null, accessories: [],
+      },
+    };
+    const plan = {
+      id: randomUUID(), characterId: character.id, productId: job.product.id,
+      templateId: "DREAM_ROUTE" as const, templateVersion: 1 as const, referenceVersion: 1 as const,
+      durationSeconds: timeline.durationSeconds, aspectRatio: "16:9" as const,
+      heroShotId: timeline.heroShotId, heroMode: "LIKENESS" as const, videoProvider: "google-veo" as const,
+      wardrobe: "Unknown", logline: "Test", cinematicStyle: "Test", worldTransitions: "Test",
+      personalizationUsed: [],
+      shots: timeline.shotIds.map((id, index) => ({
+        id, durationSeconds: timeline.durations[index], purpose: "Test", camera: "Test",
+        action: "Test", environment: "Road", lighting: "Daylight", personalization: [],
+        imagePrompt: "Test", motionPrompt: "Test", audioCues: [],
+      })),
+    };
+    await checkpoint({ character, plan, heroAttempted: true });
+    throw new MovieError("VEO_WORKFLOW_FAILED", "The Google Veo workflow could not finish submission.", 502);
+  } });
+  await worker.start();
+  try {
+    assert.equal(await worker.runOnce(), true);
+    assert.equal(retryCalls, 0);
+    const failed = await store.get(queued.id);
+    assert.equal(failed.status, "FAILED");
+    assert.equal(failed.error?.code, "VEO_WORKFLOW_FAILED");
+    assert.equal(failed.retries, undefined);
+  } finally {
+    await worker.stop();
+  }
 });
 
 test("worker lease and claim exclude a second worker and preserve live locks", async t => {

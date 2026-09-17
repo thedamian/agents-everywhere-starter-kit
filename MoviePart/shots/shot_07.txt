@@ -9,22 +9,22 @@ REFERENCE_IMAGES (attach actual files; all paths relative to MoviePart):
 person/face.jpg
 person/full_body_front.jpg
 person/half_body.jpg
-Tesla_model_3/2022_tesla_model-3_sedan_performance_s_oem_1_1600x1067.jpg
-Tesla_model_3/2022_tesla_model-3_sedan_performance_rq_oem_1_1600x1067.jpg
-Tesla_model_3/2022_tesla_model-3_sedan_performance_fq_oem_7_1600x1067.jpg
-Tesla_model_3/2022_tesla_model-3_sedan_performance_fq_oem_2_1600x1067.jpg
-Tesla_model_3/Tesla_model_3_interior_driver_side.png
+vehicle-catalog/Toyota_tundra/exterior.jpg
+vehicle-catalog/Toyota_tundra/exterior.jpg
+vehicle-catalog/Toyota_tundra/exterior.jpg
+vehicle-catalog/Toyota_tundra/exterior.jpg
+vehicle-catalog/Toyota_tundra/interior.jpg
 
 HERO IDENTITY / WARDROBE: The exact customer in person/face.jpg, not a similar-looking actor. Young adult, late teens to mid-20s, feminine presentation, medium-deep skin with warm undertone, fuller curvy build, average adult height (exact height unknown). Rounded face, full cheeks, large wide-set dark brown eyes, full lips, straight eyebrows, thin slightly winged eyeliner; no glasses or visible facial hair. Black tightly coiled braided/twisted hair just past the shoulders, center-parted as described in person.json, metallic silver tinsel woven through; preserve the actual reference identity and hairstyle. Fully buttoned white cable-knit cardigan with ribbed cuffs and hem, no visible top/undergarment, light blue denim-colored fitted trousers, thin gold necklace with small star-shaped pendant, small stud earrings, light pink/nude manicured nails. Footwear undocumented and outside the frame. full_body_front.jpg anchors build and wardrobe; half_body.jpg supplements identity.
-CAR LOCK: Same 2022-2023 pre-Highland Tesla Model 3 Performance, dual motor, Red Multi-Coat throughout. Photos override textual shape/details; ignore white, blue, or black paint. 20-inch dark turbine-style Performance wheels, low-profile tires, red brake calipers; full glass panoramic roof, black pillars, chrome-delete window trim; low fastback sedan, short front overhang, flush handles, subtle lower-door character line. Closed body-color nose, smooth front with lower air intakes, no grille, separate pre-Highland headlights, nose Tesla 'T'. Separate wraparound LED taillights, small trunk Tesla 'T'; no full-width light bar, no 'TESLA' wordmark on the trunk. Photo-authoritative cabin: black bolstered seats and dash/door trim, light wood-toned dash strip, round two-spoke Tesla wheel with physical scroll controls, 15-inch landscape center screen, no driver gauge cluster or decorative ambient strip. Ignore conflicting cream-seat wording in JSON.
+CAR LOCK: Use the same Toyota Tundra shown in the licensed exterior and interior references. The photographs are authoritative: preserve its body generation, grille, lights, cab, bed, wheels, paint, badges, dashboard, controls, seats and trim without mixing another configuration.
 
-SUBJECT: The same customer in the same red Tesla, at ease, belted, same wardrobe.
+SUBJECT: The same customer in the same photographed Toyota Tundra, at ease, belted, same wardrobe.
 ACTION: Hero eases the car to a stop at a scenic overlook, a small satisfied smile. The power now feels natural and hers. End with the car fully stationary for the final reveal.
 CAMERA: Slow dolly toward the hero through the windshield, 50mm. Control windshield reflections so her face, cardigan and hands remain readable; do not morph the windshield or camera through glass unnaturally.
 SETTING: Scenic coastal overlook at golden hour, same coast and headland as shot 6. Establish the exact parked position retained by shot 8.
-LIGHTING: Warm, soft, faithful skin tone and Red Multi-Coat paint.
+LIGHTING: Warm, soft, faithful skin tone and the photographed paint.
 MOOD: Quiet satisfaction, ownership.
 STYLE: Cinematic, subtle grain; golden palette stays continuous.
-SOUND: The same continuous instrumental cue eases gently; minimal rolling/wind sound, near-silent car. No engine roar, dialogue, narration, or lyrics.
-CONSISTENCY / NEGATIVES: Same face, skin tone, build, hair, wardrobe, accessories, red paint, car geometry and cabin. No identity morphs, wardrobe swaps, yoke, grille, rear light bar, or trunk wordmark. No full product reveal until shot 8. No DeLorean, film characters, film logos, copied film footage, or recognizable film score. No on-screen copy before shot 8.
+SOUND: The same continuous instrumental cue eases gently; minimal rolling/wind sound, restrained natural vehicle sound. No engine roar, dialogue, narration, or lyrics.
+CONSISTENCY / NEGATIVES: Same face, skin tone, build, hair, wardrobe, accessories, photographed paint, car geometry and cabin. No identity morphs, wardrobe swaps, body-style changes, or invented trim details. No full product reveal until shot 8. No DeLorean, film characters, film logos, copied film footage, or recognizable film score. No on-screen copy before shot 8.
 QA: Inspect early/middle/late frames for identity through the windshield, wardrobe, paint, and cabin continuity. Regenerate only this shot if any element drifts.

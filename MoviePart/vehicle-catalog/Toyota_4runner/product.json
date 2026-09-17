@@ -1,0 +1,22 @@
+{
+  "id": "toyota-4runner",
+  "version": 1,
+  "name": "Toyota 4Runner",
+  "make": "Toyota",
+  "model": "4Runner",
+  "exteriorColor": "As photographed",
+  "interiorColor": null,
+  "appearance": "The exact Toyota 4Runner shown in the supplied exterior and interior photographs. Preserve its body generation, lights, grille, wheels, paint, cabin and trim; do not substitute another model or configuration.",
+  "approvedClaims": [],
+  "usagePermission": "Exterior photo by Kevauto, licensed CC BY-SA 4.0, source: https://commons.wikimedia.org/wiki/File:2019_Toyota_4Runner_SR5_4.0L_front_6.16.19.jpg. Interior photo by Iamjosemon, licensed CC BY 4.0, source: https://commons.wikimedia.org/wiki/File:2023_Toyota_4Runner01.jpg.",
+  "images": [
+    {
+      "file": "exterior.jpg",
+      "role": "front_three_quarter"
+    },
+    {
+      "file": "interior.jpg",
+      "role": "interior"
+    }
+  ]
+}
